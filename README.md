@@ -8,6 +8,6 @@
 
   В настоящее время идут эксперименты с первой версией печатной платы.
 
-  !(https://github.com/UN7FGO/MK61S_MINI/blob/main/mk61s_nin_v1.jpg)
+  ![первая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/mk61s_nin_v1.jpg)
 
   
