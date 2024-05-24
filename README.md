@@ -16,10 +16,20 @@
 
   ![первая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/MK61s_mini_v1.jpg)
 
-  В разработке, по результатам текущего тестирования, вторая версия печатной платы и шилда на клавиатуру.
-
-  ![вторая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/pcb_mk61s_mini_v2.png)
-
   Принципиальная схема устройства в настоящий момент
 
   ![вторая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/MK52S_V2_MINI_Schematic.png)
+
+  В разработке, по результатам текущего тестирования, вторая версия печатной платы и шилда на клавиатуру.
+
+##Печатная плата
+
+  ![вторая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/pcb_mk61s_mini_v2.png)
+
+##Шилд
+
+  ![шилд для клавиатуры](https://github.com/UN7FGO/MK61S_MINI/blob/main/pcb_mk61s_mini_shield.png)
+
+
+
+  
