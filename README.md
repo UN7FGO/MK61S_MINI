@@ -22,11 +22,11 @@
 
   В разработке, по результатам текущего тестирования, вторая версия печатной платы и шилда на клавиатуру.
 
-##Печатная плата
+  ## Печатная плата
 
   ![вторая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/pcb_mk61s_mini_v2.png)
 
-##Шилд
+  ## Шилд
 
   ![шилд для клавиатуры](https://github.com/UN7FGO/MK61S_MINI/blob/main/pcb_mk61s_mini_shield.png)
 
