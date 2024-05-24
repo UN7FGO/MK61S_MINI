@@ -14,7 +14,7 @@
 
   В настоящее время идут эксперименты с первой версией печатной платы.
 
-  ![первая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/mk61s_nin_v1.jpg)
+  ![первая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/MK61s_mini_v1.jpg)
 
   В разработке вторая версия печатной платы и шилда н клавиатуру.
 
