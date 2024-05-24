@@ -9,7 +9,7 @@
 
 Коллектив в составе:
 - Vitasasm - программный код
-- Digitalinvitro - программный код
+- Digitalinvitro (https://github.com/digitalinvitro) - программный код
 - UN7FGO (http://gengen.ru/) - схема и печатная плата
 
   В настоящее время идут эксперименты с первой версией печатной платы.
