@@ -19,3 +19,7 @@
   В разработке вторая версия печатной платы и шилда н клавиатуру.
 
   ![вторая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/pcb_mk61s_mini_v2.png)
+
+  Принципиальная схема устройства в настоящий момент
+
+  ![вторая версия](https://github.com/UN7FGO/MK61S_MINI/blob/main/MK52S_V2_MINI_Schematic.png)
