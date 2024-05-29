@@ -35,6 +35,6 @@
 
   ## Используемые выводы микроконтроллера
 
-  ![STM32 pinout](hhttps://github.com/UN7FGO/MK61S_MINI/blob/main/img/mk61s_new_pinout.jpg)
+  ![STM32 pinout](https://github.com/UN7FGO/MK61S_MINI/blob/main/img/mk61s_new_pinout.jpg)
 
   
