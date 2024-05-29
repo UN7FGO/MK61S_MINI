@@ -33,6 +33,8 @@
 
   ![шилд для клавиатуры](https://github.com/UN7FGO/MK61S_MINI/blob/main/pcb_mk61s_mini_shield.png)
 
+  ## Используемые выводы микроконтроллера
 
+  ![STM32 pinout](hhttps://github.com/UN7FGO/MK61S_MINI/blob/main/img/mk61s_new_pinout.jpg)
 
   
