@@ -45,4 +45,4 @@ https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Programming.pdf
 73!
 
 
-![](https://komarev.com/ghpvc/?username=UN7FGO)
+![](https://komarev.com/ghpvc/?username=MK61s-mini)
