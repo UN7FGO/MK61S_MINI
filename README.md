@@ -35,7 +35,8 @@ https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Documentation.pdf
 **Инструкция по сборке:**  
 https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Assembly.pdf
 
-**Инструкция по прошивке микроконтроллера, "для чайников":** 
+**Инструкция по прошивке микроконтроллера, "для чайников":**  
 https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Programming.pdf
+
 
 73!
