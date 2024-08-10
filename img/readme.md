@@ -1,1 +1,1 @@
-Images of projetc.
+Images of projeсt.
