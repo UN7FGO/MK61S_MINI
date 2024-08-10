@@ -1,13 +1,15 @@
+![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
+![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white) 
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![Arduino](https://img.shields.io/badge/-Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white)
+
+
 # MK61S_MINI
 Развитие проекта эмулятора МК-61s - https://gitlab.com/vitasam/mk61s/
 
 * На вопрос критиков: **"Зачем?"**  
 * Отвечаю: **Хочется сделать идеальную версию любимого микрокалькулятора, с возможностью загрузки и сохранения программ и доступной "в один клик" полной библиотекой программ.**
 
-![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
-![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white) 
-![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
-![Arduino](https://img.shields.io/badge/-Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white)
 
 Первой задачей было, получение бюджетного варианта, легкого в повторении всеми желающими. В связи с чем, печатная плата была ограничена размером 10х10 сантиметров. В качестве микроконтроллера используется готовая отладочная плата "BlackPill". Для сборки устройства не требуется паяльная станция или специфичное оборудование. Навыков пайки начинающего радиолюбителя, будет достаточно.
 
