@@ -23,7 +23,7 @@
 
 Вторая версия устройства в сборе, имеет габариты 99х99х19 мм.
 
-[2-я версия устройства в сборе]!https://github.com/UN7FGO/MK61S_MINI/blob/main/img/mk61s-mini.jpg
+![2-я версия устройства в сборе](https://github.com/UN7FGO/MK61S_MINI/blob/main/img/mk61s-mini.jpg)
 
 Более подробное описание проекта - https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Documentation.pdf
 
