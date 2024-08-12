@@ -48,6 +48,9 @@ https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Assembly.pdf
 **Инструкция по прошивке микроконтроллера, "для чайников":**  
 https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Programming.pdf
 
+Желающие поправить проект "под себя", могут это сделать на Open Source Hardware Lab - <a href="https://oshwlab.com/un7fgo/mk61s_v1_copy_copy_copy_copy"> ЗДЕСЬ </a>
+
+
 
 73!
 
