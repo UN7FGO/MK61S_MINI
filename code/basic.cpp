@@ -57,6 +57,15 @@ static u8    picode[100];
 static u16   BasicList[40];
 static int   NextBasic;
 
+
+bool  BASIC_library_select(void) {
+  u8* piptr = &picode[0];
+  while(*piptr != (u8) BASIC_WORD::_END ) piptr++;
+  lcd.setCursor(0, 0); lcd.print((char*) ++piptr);
+  const i32 key = keyboard.get_key_wait();
+  return true;
+}
+
 bool  BasicIsReady(void) {return (bool) (NextBasic >= 0);}
 
 void  InitBasic(void) {
@@ -123,12 +132,36 @@ int  AssignBasic(void) {
 }
 
 char* skip_space(char* line) {
-  do {
-      const char symbol = *line;
-      if(symbol == ' ' || symbol == 0) break;
-      line++;
-  } while(true);
+  #ifdef DEBUG_BASIC
+    Serial.print("after skip space:"); Serial.println(line);
+  #endif
+  while(*line == ' ') {line++;}
+  #ifdef DEBUG_BASIC
+    Serial.print("before skip space:"); Serial.println(line);
+  #endif
   return line;
+}
+
+char* skip_to_space(char* line) {
+  #ifdef DEBUG_BASIC
+    Serial.print("after skip token char:"); Serial.println(line);
+  #endif
+  while(*line != ' ') {
+    if(*line == 0) break;
+    line++;
+  }
+  #ifdef DEBUG_BASIC
+    Serial.print("before skip token char:"); Serial.println(line);
+  #endif
+  return line;
+}
+
+bool  IsAlpha(char symbol) {
+  return (symbol >= 'A' &&  symbol <= 'Z');
+}
+
+bool  IsDigit(char symbol) {
+  return (symbol >= '0' &&  symbol <= '9');
 }
 
 bool ErrorBasic(const char* text) {
@@ -152,14 +185,16 @@ bool  CompileBasic(char* program) {
   picode[IPpi++] = (u8) BASIC_WORD::_BEGIN;
 
   while(*program != 0) { // не конец строки продолжим
-    const char* token = program;
     program = skip_space(program);
+    const char* token = program;
+    program = skip_to_space(program);
     *program = 0;
 
-    if(strcmp(token, "?") == 0) {
-      #ifdef DEBUG_BASIC
+    #ifdef DEBUG_BASIC
         Serial.print("Basic compiler token:"); Serial.println((char*) token);
-      #endif
+    #endif
+
+    if(strcmp(token, "?") == 0) {
       picode[IPpi++] = (u8) BASIC_WORD::_PRINT;
       // передаем строку 
       program++;
@@ -171,12 +206,12 @@ bool  CompileBasic(char* program) {
       } while(*program != '"');
       picode[IPpi++] = 0;
       program++;
-    } else if(strcmp(token, "HLT")) {
+    } else if(strcmp(token, "HLT") == 0) {
+      program = skip_space(++program);
       #ifdef DEBUG_BASIC
-        Serial.print("Basic parser - HLT");
+        Serial.print("HLT find! Skip space to '"); Serial.write(*program); Serial.println("'");
       #endif
-      program = skip_space(program);
-      if(*program >= 'A' && *program <= 'Z') { // END - конец трансляции файла
+      if(IsAlpha(*program) || IsDigit(*program)) { // END - конец трансляции файла
         const char *name = program;
         picode[IPpi++] = (u8) BASIC_WORD::_END;
         while(*program != 0 && *program != ' ') picode[IPpi++] = *program++;
@@ -188,7 +223,7 @@ bool  CompileBasic(char* program) {
       } else { // STOP - остановка программы
         picode[IPpi++] = (u8) BASIC_WORD::_STOP;
         #ifdef DEBUG_BASIC
-          Serial.print("Basic compile STOP");
+          Serial.println("Basic compile STOP");
         #endif
       }
     }
@@ -274,6 +309,7 @@ void  EditBasic(void) { // Редактирования строки BASIC
             Serial.print("1."); Serial.println((char*) &program[0]);
             Serial.print("2."); Serial.println((char*) &program[1]);
           #endif
+          program[0][16] = ' '; // убираем 0 терминатор в первой строке
           CompileBasic((char*) &program);
           #ifdef DEBUG_BASIC
             Serial.println("compiled program.");

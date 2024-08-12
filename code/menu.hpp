@@ -2,22 +2,9 @@
 #define MENU_CLASS
 
 #include  "keyboard.hpp"
-#include  "library_pmk.hpp"
 #include  "basic.hpp"
-
-bool  mk61_library_select(void) {
-  const int n = select_program(keyboard);
-  if(n < 0) return false;
-
-  load_program(n);
-  return true;
-}
-
-bool  BASIC_library_select(void) {
-
-}
-
-extern void InfoData(void);
+#include  "tools.hpp"
+#include  "library_pmk.hpp"
 
 typedef bool (*menu_action)(void);  // возвращает необходимость покинуть главное меню 
 
@@ -27,33 +14,23 @@ struct  t_punct {
     char          text[];
 };
 
-const t_punct DFU_mode_punct  = {.size = 15, .action = (menu_action) &DFU_enable,           .text = "DFU mode enable"};
-const t_punct LIB_61_punct    = {.size = 12, .action = &mk61_library_select,                .text = "MK61 library"};
-const t_punct LIB_BASIC_punct = {.size = 13, .action = &BASIC_library_select,               .text = "BASIC library"};
-const t_punct SAVE_punct      = {.size = 14, .action = &Store,                              .text = "Store to flash"};
-const t_punct LOAD_punct      = {.size = 15, .action = &Load,                               .text = "Load from flash"};
-const t_punct RESET_punct     = {.size = 12, .action = (menu_action) &NVIC_SystemReset,     .text = "Reset device"};
-const t_punct BASIC_punct     = {.size = 12, .action = (menu_action) &EditBasic,            .text = "BASIC editor"};
-const t_punct FLASH_punct     = {.size = 11, .action = (menu_action) &InfoData,             .text = "Information"};
+extern void InfoData(void);
+extern bool mk61_library_select(void);
+
+namespace library_mk61 {
+  const   int             COUNT_PUNCTS = 8;
+  extern  const t_punct*  MENU[8];
+}
 
 class class_menu {
   private:
-    static constexpr int MENU_PUNCT_COUNT = 8;
     static constexpr int SIZE_MENU_WINDOW = 2;
-    const t_punct* puncts[MENU_PUNCT_COUNT] = {
-      &DFU_mode_punct,
-      &BASIC_punct,
-      &LIB_61_punct,
-      &LIB_BASIC_punct,
-      &SAVE_punct,
-      &LOAD_punct,
-      &RESET_punct,
-      &FLASH_punct
-    };
+    int MENU_PUNCT_COUNT;
     u8 active_punct;
     u8 previous_up;
+    t_punct** puncts;;
 
-    void draw(void) {
+    void draw(void);/* {
       const int delta = (active_punct + 1) - SIZE_MENU_WINDOW;
       const int up = (delta <= 0)? 0 : delta;
 
@@ -74,11 +51,11 @@ class class_menu {
           }
       }
       previous_up = up;
-    }
+    }*/
 
   public:
-    class_menu(void) : active_punct(0), previous_up(0) {};
-    void select(void) {
+    class_menu(t_punct** punts_of_menu, int count_of_puncts) : MENU_PUNCT_COUNT(count_of_puncts), puncts(punts_of_menu), active_punct(0), previous_up(0) {};
+    void select(void);/* {
       do{
         draw();
         const i32 last_key_code = keyboard.get_key_wait();
@@ -98,8 +75,7 @@ class class_menu {
             return; // отмена
         }
       } while(true);
-    }
+    }*/
 };
-
 
 #endif

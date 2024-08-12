@@ -236,7 +236,6 @@ class   class_glyph {
         lcd.createChar(i, (u8*) &custom_char[i]);  
       }
       // draw glyph 
-      // lcd.clear();
       for(int j=0; j < 2; j++) {
         lcd.setCursor(x, j);
         for(int i=0; i < (16-x); i++) {

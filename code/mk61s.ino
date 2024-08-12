@@ -19,11 +19,12 @@ static  class_mk61_core    mk61s;
 #include "disasm.hpp"
 #include "tools.hpp"
 #include "menu.hpp"
+//#include "menu_mk61lib.hpp"
 #include "basic.hpp"
 
 LiquidCrystal lcd(PIN_LCD_RS, PIN_LCD_E, PIN_LCD_DB4, PIN_LCD_DB5, PIN_LCD_DB6, PIN_LCD_DB7);
 
-static class_menu  mk61_menu;
+static class_menu/*_mk61lib*/  mk61_menu = class_menu((t_punct**) library_mk61::MENU, library_mk61::COUNT_PUNCTS);
 
 const  class_glyph      glyph; //(lcd);
 const  class_LCD_Label  MnemoLabel(10, 0);
@@ -76,7 +77,7 @@ void lcd_std_display_redraw(void) { // Принудительная отрисо
 }
 
 void mk61_display_refresh(void) {
-    char disasm[LEN_DISASM_LINE+1];
+  char disasm[LEN_DISASM_LINE+1];
   
   // Обновление дисплея МК61, если изменилась информация на экране
     if(!mk61s.update_indicator(&display_text[0], display_symbols)) { 
@@ -152,7 +153,7 @@ void setup() {
   #endif
   keyboard.Init();
   
-  #ifdef REVISION_V2
+  #if defined(REVISION_V2) || defined(REVISION_V3)
     pinMode(PIN_LCD_RW, OUTPUT);
     digitalWrite(PIN_LCD_RW, LOW);
   #endif

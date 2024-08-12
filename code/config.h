@@ -5,7 +5,7 @@
 #include "rust_types.h"
 
 //#define B3_34
-#define DEBUG_BASIC
+//#define DEBUG_BASIC
 //#define DEBUG
 //#define DEBUG_DISASMBLER
 //#define DEBUG_LOAD
@@ -113,7 +113,7 @@ class class_calc_config {
     static const u8   PIN_BUZZER      =   PB10;
   #else
     #ifdef REVISION_V3
- /* REVISION_V3 Описание ног для STM32F411CEU6 aka BlackPill MK61s-mini_v1*/
+ /* REVISION_V3 Описание ног для STM32F411CEU6 aka BlackPill MK61s-mini_v3*/
       static const u8   PIN_LCD_RS      =   PB2;
       static const u8   PIN_LCD_E       =   PB0;
       static const u8   PIN_LCD_RW      =   PB1;
