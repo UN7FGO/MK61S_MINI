@@ -234,6 +234,7 @@ class class_mk61_core {
 void MK61Emu_ON(void);
 void MK61Emu_SetDisplayed(uint32_t value);
 uint32_t MK61Emu_GetDisplayed(void);
+int MK61Emu_GetDisplayReg(void);
 uint32_t MK61Emu_GetComma(void);
 void MK61Emu_SetKeyPress(const int key1, const int key2);
 void MK61Emu_DoKeyPress(const int key1, const int key2);

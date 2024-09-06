@@ -4,7 +4,7 @@
 #include "keyboard.hpp"
 
 #include "rust_types.h"
-static  const u8    CountPrograms = 8;
+static  const u8    CountPrograms = 9;
 struct  TPunct {
   char  text[16];
   int   offset;

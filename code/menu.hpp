@@ -2,11 +2,12 @@
 #define MENU_CLASS
 
 #include  "keyboard.hpp"
-#include  "basic.hpp"
 #include  "tools.hpp"
 #include  "library_pmk.hpp"
 
 typedef bool (*menu_action)(void);  // возвращает необходимость покинуть главное меню 
+
+static constexpr int MENU_PUNCT = 4;
 
 struct  t_punct {
     u8            size;
@@ -14,12 +15,12 @@ struct  t_punct {
     char          text[];
 };
 
-extern void InfoData(void);
+extern bool InfoData(void);
 extern bool mk61_library_select(void);
 
 namespace library_mk61 {
-  const   int             COUNT_PUNCTS = 8;
-  extern  const t_punct*  MENU[8];
+  const   int             COUNT_PUNCTS = MENU_PUNCT;
+  extern  const t_punct*  MENU[MENU_PUNCT];
 }
 
 class class_menu {
@@ -28,7 +29,7 @@ class class_menu {
     int MENU_PUNCT_COUNT;
     u8 active_punct;
     u8 previous_up;
-    t_punct** puncts;;
+    t_punct** puncts;
 
     void draw(void);/* {
       const int delta = (active_punct + 1) - SIZE_MENU_WINDOW;
@@ -54,7 +55,7 @@ class class_menu {
     }*/
 
   public:
-    class_menu(t_punct** punts_of_menu, int count_of_puncts) : MENU_PUNCT_COUNT(count_of_puncts), puncts(punts_of_menu), active_punct(0), previous_up(0) {};
+    class_menu(t_punct** punts_of_menu, int count_of_puncts) : MENU_PUNCT_COUNT(count_of_puncts), active_punct(0), previous_up(0), puncts(punts_of_menu) {};
     void select(void);/* {
       do{
         draw();

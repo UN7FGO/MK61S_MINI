@@ -9,20 +9,12 @@ namespace library_mk61 {
 
 const t_punct DFU_mode_punct  = {.size = 15, .action = (menu_action) &DFU_enable,           .text = "DFU mode enable"};
 const t_punct LIB_61_punct    = {.size = 12, .action = &mk61_library_select,                .text = "MK61 library"};
-const t_punct LIB_BASIC_punct = {.size = 13, .action = &BASIC_library_select,               .text = "BASIC library"};
-const t_punct SAVE_punct      = {.size = 14, .action = &Store,                              .text = "Store to flash"};
-const t_punct LOAD_punct      = {.size = 15, .action = &Load,                               .text = "Load from flash"};
 const t_punct RESET_punct     = {.size = 12, .action = (menu_action) &NVIC_SystemReset,     .text = "Reset device"};
-const t_punct BASIC_punct     = {.size = 12, .action = (menu_action) &EditBasic,            .text = "BASIC editor"};
 const t_punct FLASH_punct     = {.size = 11, .action = (menu_action) &InfoData,             .text = "Information"};
 
-const t_punct* MENU[8] = {
+const t_punct* MENU[MENU_PUNCT] = {
       &DFU_mode_punct,
-      &SAVE_punct,
-      &LOAD_punct,
       &LIB_61_punct,
-      &BASIC_punct,
-      &LIB_BASIC_punct,
       &RESET_punct,
       &FLASH_punct
 };
@@ -75,7 +67,12 @@ void class_menu::select(void) {
             #ifdef SERIAL_OUTPUT
               Serial.print("Select menu: '"); Serial.print(puncts[active_punct]->text); Serial.println('\'');
             #endif 
-            if(puncts[active_punct]->action() == true) return; else break;
+            if(puncts[active_punct]->action() == true) {
+              return; 
+            } else { 
+              lcd.clear();
+              break;
+            }
       case KEY_ESC_PRESS:
             return; // отмена
     }

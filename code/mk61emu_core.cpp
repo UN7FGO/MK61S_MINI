@@ -2157,6 +2157,22 @@ void MK61Emu_get_1302_R(char* buff) {
   buff[42] = 0;
 }
 
+int MK61Emu_GetDisplayReg(void) {
+  int num = 0;
+    for(int i = 21; i >= 0 ; i -= 3) {
+      const int digit = m_IK1302.R[i];
+      #ifdef SERIAL_OUTPUT
+        Serial.print(digit); Serial.print(",");
+      #endif
+      if(digit <= 9) num = num*10 + digit; else break;
+    }
+    #ifdef SERIAL_OUTPUT
+      Serial.println(num);
+    #endif
+
+  return num;
+}
+
 const char* MK61Emu_GetIndicatorStr(const char* display_symbols) {
     uint16_t i = 0;
 

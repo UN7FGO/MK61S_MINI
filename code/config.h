@@ -5,12 +5,13 @@
 #include "rust_types.h"
 
 //#define B3_34
-//#define DEBUG_BASIC
+#define SPI_FLASH
 //#define DEBUG
 //#define DEBUG_DISASMBLER
 //#define DEBUG_LOAD
+//#define DEBUG_SPIFLASH
 
-#if defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined (DEBUG_LOAD)
+#if defined(DEBUG_DISASMBLER) || defined(DEBUG_LOAD) || defined(DEBUG_SPIFLASH)
  #define SERIAL_OUTPUT
  //#warning Serial module included!
 #endif
@@ -64,6 +65,7 @@ class class_calc_config {
   static const u8   PIN_KBD_ROW2    =   PB6;
   static const u8   PIN_KBD_ROW1    =   PB5;
   static const u8   PIN_KBD_ROW0    =   PB4;
+  static const u8   PIN_SPIFLASH_CS =   PA4;
 #else
  #ifdef LK432
  /* Описание ног для STM32L432 aka LK432 in Arduino shield (Wokwi)*/
@@ -86,6 +88,7 @@ class class_calc_config {
   static const u8   PIN_KBD_ROW2    =   D5;
   static const u8   PIN_KBD_ROW1    =   D6;
   static const u8   PIN_KBD_ROW0    =   D13;
+  static const u8   PIN_SPIFLASH_CS =   PA4;
  #else
   #ifdef REVISION_V2
  /* Описание ног для STM32F411CEU6 aka BlackPill MK61s-mini_v2*/
@@ -111,6 +114,7 @@ class class_calc_config {
     static const u8   PIN_KBD_ROW0    =   PB4;
     static const u8   PIN_J2          =   PB3;
     static const u8   PIN_BUZZER      =   PB10;
+    static const u8   PIN_SPIFLASH_CS =   PA4;
   #else
     #ifdef REVISION_V3
  /* REVISION_V3 Описание ног для STM32F411CEU6 aka BlackPill MK61s-mini_v3*/
@@ -137,6 +141,7 @@ class class_calc_config {
       static const u8   PIN_BUZZER      =   PA0;
       static const u8   PIN_LED         =   PC13;
       static const u8   PIN_OUT_PWR     =   PB9;
+      static const u8   PIN_SPIFLASH_CS =   PA4;
     #else 
  /* REVISION_V1 Описание ног для STM32F411CEU6 aka BlackPill MK61s-mini_v1*/
       static const u8   PIN_LCD_RS      =   PB1;
@@ -158,6 +163,7 @@ class class_calc_config {
       static const u8   PIN_KBD_ROW2    =   PB6;
       static const u8   PIN_KBD_ROW1    =   PB5;
       static const u8   PIN_KBD_ROW0    =   PB4;
+      static const u8   PIN_SPIFLASH_CS =   PA4;
     #endif
   #endif
  #endif  

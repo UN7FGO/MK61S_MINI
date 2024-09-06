@@ -12,19 +12,15 @@ static  class_calc_config   config;
 #include "mk61emu_core.h"
 
 static  class_mk61_core    mk61s;
-//static  class_keyboard     keyboard;
-//using namespace kbd;
 
 #include "cross_hal.h"
 #include "disasm.hpp"
 #include "tools.hpp"
 #include "menu.hpp"
-//#include "menu_mk61lib.hpp"
-#include "basic.hpp"
 
 LiquidCrystal lcd(PIN_LCD_RS, PIN_LCD_E, PIN_LCD_DB4, PIN_LCD_DB5, PIN_LCD_DB6, PIN_LCD_DB7);
 
-static class_menu/*_mk61lib*/  mk61_menu = class_menu((t_punct**) library_mk61::MENU, library_mk61::COUNT_PUNCTS);
+static class_menu  mk61_menu = class_menu((t_punct**) library_mk61::MENU, library_mk61::COUNT_PUNCTS);
 
 const  class_glyph      glyph; //(lcd);
 const  class_LCD_Label  MnemoLabel(10, 0);
@@ -66,9 +62,6 @@ const char display_symbols[16] = {
 char        display_text[14];          //-12345678 -12
 AngleUnit   cache_angle;
 
-static u8   mk61_go_basic[105];
-static bool BASIC_mode;
-
 void lcd_std_display_redraw(void) { // Принудительная отрисовка стандартного экрана MK61s_mini
   lcd.clear();
   cache_angle = AngleUnit::NONE;  // сбросим кеш угловых единиц, необходимо перерисовать Г-ГРД-Р
@@ -86,8 +79,6 @@ void mk61_display_refresh(void) {
         terminal.dbg_info("[mk61_display_refresh] ", display_text);
       #endif
     }
-
-    if(BASIC_mode) return;
 
   // вывод содержимого счетчика команд в режимем АВТ, для отладки по ПП
     if(exeq == 0) { // Режим АВТ работа с калькулятором в диалоговом режиме
@@ -135,22 +126,31 @@ void mk61_display_draw_upline(void) {
     MarkLabel.print("          ");
 }
 
-void  InfoData(void) {
+bool  InfoData(void) {
   lcd.clear(); 
   lcd.setCursor(0,0); 
   lcd.print("cnt:"); lcd.print(read_counter_switch());
   lcd.print(" sw:"); lcd.print((u8) read_grade_switch());
+  if(flash_is_ok) lcd.print(" W25"); 
   lcd.setCursor(0,1); 
   lcd.print("run:"); lcd.print(runtime_ms);
   keyboard.get_key_wait();
-  mk61_display_refresh();
+  //mk61_display_refresh();
+  //lcd.clear();
+  return false;
 }
 
 void setup() {
+  delay(1000);
   #ifdef SERIAL_OUTPUT
     terminal.init();
     Serial.println(FIRMWARE_VER);
   #endif
+
+  #ifdef SPI_FLASH
+      init_external_flash();
+  #endif
+
   keyboard.Init();
   
   #if defined(REVISION_V2) || defined(REVISION_V3)
@@ -198,9 +198,6 @@ void setup() {
   clear_mnemo();
 
   mk61s.enable();
-  memset(&mk61_go_basic, 0xFF, sizeof(mk61_go_basic));
-  InitBasic();
-  BASIC_mode = false;
 
   #ifdef SERIAL_OUTPUT
     terminal.dbg_info("ON");
@@ -296,27 +293,8 @@ void key_press_handler(i32 keycode) {
       break;
     default:
       if(keycode >= 0) {
-        BASIC_mode = false;
         MK61Emu_SetKeyPress(cross_key.x, cross_key.y); // передача нажатия в MK61s
       }
-  }
-}
-
-void  check_and_start_basic(void) {
-  const int mk61_IP = mk61s.get_IP();
-  const int BasicN  = mk61_go_basic[mk61_IP];
-
-  #ifdef DEBUG_BASIC
-    Serial.print("Read binding from MK61 step N "); Serial.println(mk61_IP); 
-    Serial.print("Assign BASIC program N "); Serial.println(BasicN); 
-  #endif
-
-  if(BasicN != 0xFF){
-    #ifdef DEBUG_BASIC
-      Serial.println("Run BASIC code!");
-    #endif
-    BASIC_mode = true;
-    RunBasic(BasicN);
   }
 }
 
@@ -367,8 +345,6 @@ inline void mk61_automate(void) {
           MnemoLabel.print("   ");
           exeq = 0;
           core_stage = START;
-          
-          if(BasicIsReady()) check_and_start_basic();
         }
       }
   } // end switch 
@@ -386,7 +362,7 @@ void loop() {
     #endif      
   }
 
-  keyboard.next_scan_line();
+  //keyboard.next_scan_line();
 
   if(check_hold_USER_KEY) { // ожидания события удержания клавиши USER 
 
@@ -426,14 +402,19 @@ void loop() {
         #ifdef SERIAL_OUTPUT
           Serial.println("menu exit.");
         #endif 
-    } else if (last_key_code == KEY_BASIC) {
+    } else if (last_key_code == KEY_LOAD) {
         keyboard.get_key(); // очистим буфер клавиатуры от этого кода
-        const int assign_code = AssignBasic();
-        const int mk61_IP = mk61s.get_IP();
-        #ifdef DEBUG_BASIC
-          Serial.print("Assign MK61 step N "); Serial.print(mk61_IP); Serial.print(" BASIC program N "); Serial.println(assign_code);
-        #endif
-        mk61_go_basic[mk61_IP] = assign_code;
+        if(Load()) {
+          lcd.setCursor(0, 1); lcd.print(" press any key! ");
+        }
+        keyboard.get_key_wait();
+        lcd_std_display_redraw(); 
+    } else if (last_key_code == KEY_SAVE) {
+        keyboard.get_key(); // очистим буфер клавиатуры от этого кода
+        if(Store()) {
+          lcd.setCursor(0, 1); lcd.print(" press any key! ");
+        }
+        keyboard.get_key_wait();
         lcd_std_display_redraw(); 
     } else {
 
@@ -445,7 +426,7 @@ void loop() {
       }
 
       const class_mk61_core::mode_edge changing_mode = mk61s.get_calculator_mode();
-      if(!BASIC_mode && changing_mode != class_mk61_core::mode_edge::UNCHANGED) { // Ловим только фронт перехода из одного состояния в другое
+      if(changing_mode != class_mk61_core::mode_edge::UNCHANGED) { // Ловим только фронт перехода из одного состояния в другое
         #ifdef DEBUG
           Serial.println("changin mode PRG/AVT");
         #endif
@@ -471,7 +452,7 @@ void loop() {
     #endif
   }
 
-  keyboard.check_scan_line();
+  keyboard.scan();
 }
 
 #ifdef SERIAL_OUTPUT

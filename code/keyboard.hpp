@@ -131,9 +131,10 @@ class   class_keyboard {
         digitalWrite(pins[i], HIGH);
         pinMode(pins[i], INPUT);
       }
-      for(u32 i=0; i < KEY_IN_COLUMN; i++) {
+      for(usize pin : data_pins) pinMode(pin, INPUT_PULLDOWN);
+/*      for(u32 i=0; i < KEY_IN_COLUMN; i++) {
         pinMode(data_pins[i], INPUT_PULLDOWN);
-      }
+      }*/
       cir_buff.Init();
 
       process_init();
@@ -206,10 +207,15 @@ class   class_keyboard {
 
     u32   get_keydata(void) { // Считать данные с порта данных клавиатуры
       u32 data = 0;
+      for(int pin : data_pins) data = (data<<1) | digitalRead(pin);
+      /*{ 
+        data <<= 1;
+        data |= digitalRead(pin);
+      }
       for(u32 i=0; i < KEY_IN_COLUMN; i++) {
         data <<= 1;
         data |= digitalRead(data_pins[i]);
-      }
+      }*/
       return data;
     }
 
@@ -266,6 +272,11 @@ class   class_keyboard {
 
     bool  is_released() {
       return (keymask[scan_line].now == 0);
+    }
+
+    void  scan(void) {
+      check_scan_line();
+      next_scan_line();
     }
 };
 

@@ -9,9 +9,11 @@
 static const int switch_R_GRD_G = 106;
 static const int count_switch_R_GRD_G = 107;
 
+extern bool flash_is_ok;
 extern void DFU_enable(void);
 extern bool Store(void);
 extern bool Load(void);
+extern void init_external_flash(void);
 
 inline bool IsDecimalDigit(char symbol) {
  return ((symbol >= '0') && (symbol <= '9'));
