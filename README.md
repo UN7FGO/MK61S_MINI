@@ -33,11 +33,9 @@
 
 На данный момент, актуальной является 3-я версия печатной платы устройства, гербер-файлы которой размещены в соответствующем разделе. 
 
-Вторая версия устройства в сборе, имеет габариты 99х99х19 мм. 
+Устройства в сборе, имеет габариты 99х99х19 мм, но никто не мешает "доработать его напильником" и сделать тоньше. Все возможности для этого имеются.
 
 ![2-я версия устройства в сборе](https://github.com/UN7FGO/MK61S_MINI/blob/main/img/mk-61s-mini-c.jpg)
-
-Третья версия устройства имеет в основном косметические изменения.
 
 **Более подробное описание проекта:**  
 https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Documentation.pdf
@@ -50,9 +48,6 @@ https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Programming.pdf
 
 Желающие поправить проект "под себя", могут это сделать на Open Source Hardware Lab - <a href="https://oshwlab.com/un7fgo/mk61s_v1_copy_copy_copy_copy"> ЗДЕСЬ </a>
 
-
-
 73!
-
 
 ![](https://komarev.com/ghpvc/?username=MK61s-mini)
