@@ -28,7 +28,55 @@
 #include "rust_types.h"
 #include <stdbool.h>
 
-extern uint8_t ringM[252+252+42+42+42+42];
+#ifdef EXPAND_RING_MK61
+  //                                        IR1   IR2  IKF  1302 1303 1306
+  static constexpr  usize   SIZE_RING_M   = 252 + 252 + 42 + 42 + 42 + 42;
+  //                                        IR1  IKF  1302 1303 1306
+  static constexpr  usize   OFFSET_IK1302 = 252 + 42 + 42;
+  static constexpr  usize   OFFSET_IK1303 = 252 + 42 + 42 + 42;
+  static constexpr  usize   OFFSET_IK1306 = 252 + 42 + 42 + 42 + 42;
+#else
+  //                                        IR1   IR2  1302 1303 1306
+  static constexpr  usize   SIZE_RING_M   = 252 + 252 + 42 + 42 + 42;
+  //                                        IR1  1302 1303 1306
+  static constexpr  usize   OFFSET_IK1302 = 252 + 42;
+  static constexpr  usize   OFFSET_IK1303 = 252 + 42 + 42;
+  static constexpr  usize   OFFSET_IK1306 = 252 + 42 + 42 + 42;
+#endif
+
+extern uint8_t ringM[SIZE_RING_M];
+
+namespace ring_M {
+  struct  K745 {
+    const char  *NAME;
+    const usize OFFSET;
+  };
+  static constexpr K745 IR2_1_0 = {.NAME = "IR2.1_0", .OFFSET = 0};
+  static constexpr K745 IR2_2   = {.NAME = "IR2.2",   .OFFSET = 42};
+  static constexpr K745 IK130X  = {.NAME = "IK130X",  .OFFSET = 42 + 42};
+
+#ifdef EXPAND_RING_MK61
+  static constexpr K745 IK1302  = {.NAME = "IK1302",  .OFFSET = 42 + 42 + 252};
+  static constexpr K745 IK1303  = {.NAME = "IK1303",  .OFFSET = 42 + 42 + 252 + 42};
+  static constexpr K745 IK1306  = {.NAME = "IK1306",  .OFFSET = 42 + 42 + 252 + 42 + 42};
+  static constexpr K745 IR2_1_1 = {.NAME = "IR2.1_1", .OFFSET = 42 + 42 + 252 + 42 + 42 + 42};
+  static const K745 CHIP[6] = {IR2_1_0, IR2_2, IK130X, IK1302, IK1303, IK1306, IR2_1_1};
+#else
+  static constexpr K745 IK1302  = {.NAME = "IK1302",  .OFFSET = 42 + 252};
+  static constexpr K745 IK1303  = {.NAME = "IK1303",  .OFFSET = 42 + 252 + 42};
+  static constexpr K745 IK1306  = {.NAME = "IK1306",  .OFFSET = 42 + 252 + 42 + 42};
+  static constexpr K745 IR2_1_1 = {.NAME = "IR2.1_1", .OFFSET = 42 + 252 + 42 + 42 + 42};
+  static const K745 CHIP[6] = {IR2_1_0, IR2_2, IK1302, IK1303, IK1306, IR2_1_1};
+#endif
+} // namespace ring_M
+
+typedef enum { 
+  X1 = ring_M::IR2_1_1.OFFSET + (42 * 0), 
+  X  = ring_M::IR2_1_1.OFFSET + (42 * 1),
+  Y  = ring_M::IR2_1_1.OFFSET + (42 * 2),
+  Z  = ring_M::IR2_1_1.OFFSET + (42 * 3),
+  T  = ring_M::IR2_1_1.OFFSET + (42 * 4)
+} stack;
 
 enum enum_core61_stage {START, NEXT};
 
@@ -50,9 +98,11 @@ typedef enum
 typedef enum
 {
     // Offsets in RingM buffer
-    REG_Y = 580,
-    REG_Z = 622,
-    REG_T = 622 + 42
+    REG_X1  =   580 - 42 - 42,
+    REG_X   =   580 - 42,
+    REG_Y   =   580,
+    REG_Z   =   622,
+    REG_T   =   622 + 42
 } StackRegister;
 
 typedef uint32_t microinstruction_t; // 4-байтные микрокоманды
@@ -150,24 +200,13 @@ class class_mk61_core {
   private:
     //                                mantisa                     |    pow
     //                              0   1   2   3   4  5  6  7  8,  9, 10, 11
-    const int indicator_pos[12] = {24, 21, 18, 15, 12, 9, 6, 3, 0, 33, 30, 27};
+    const usize indicator_pos[12] = {24, 21, 18, 15, 12, 9, 6, 3, 0, 33, 30, 27};
     u32    backstep_comma_position;
   public:
     const int reg_Y_pow         = 580;
-    enum  class mode_edge  {UNCHANGED=-1, TURN_PRG=0, TURN_AUTO=8, TURN_COMPUTING=11};
     void  enable();
     void  cycle(void);
     void  step(void);
-
-    mode_edge  get_calculator_mode(void) {
-      const u32 now_comma_position = get_comma_position();
-      if(backstep_comma_position != now_comma_position) {
-        backstep_comma_position = now_comma_position;  // перезапишем измеение запятой
-        return (mode_edge) now_comma_position;
-      } else {
-        return mode_edge::UNCHANGED;
-      }
-    }
 
     int get_ring_address(int linear_address) const {
       const int cycle_x = ((linear_address % 7) == 0)?  linear_address : (linear_address - 7);
@@ -218,6 +257,20 @@ class class_mk61_core {
       *buffer = 0;
     }
 
+    //      mantisa                     |    pow
+    //  0   1   2   3   4  5  6  7  8,  9, 10, 11
+    //{24, 21, 18, 15, 12, 9, 6, 3, 0, 33, 30, 27};
+    u8  byte_from_R(const usize nR, usize номер_пары) {
+      if(номер_пары < 4) {
+        const usize pair_offset = (nR * 42) + 21 - 6 * номер_пары; // позиция первой тетрады пары определяется по формуле offset = 21 - 6 * номер_пары
+        return ((ringM[pair_offset] * 10) + ringM[pair_offset - 3]);
+      } else {
+        const usize pair_offset = (nR * 42) + 30; 
+        return ((ringM[pair_offset] * 10) + ringM[pair_offset - 3]);
+      }
+    }
+
+
     void  read_Y(char* buffer, const char* display_symbols);
 
     // возращает false - есть изменения в дисплейной строке/ true - нет изменений
@@ -231,25 +284,36 @@ class class_mk61_core {
  extern "C" {
 #endif
 */
-void MK61Emu_ON(void);
-void MK61Emu_SetDisplayed(uint32_t value);
+void    MK61Emu_ON(void);
+void    MK61Emu_SetDisplayed(uint32_t value);
 uint32_t MK61Emu_GetDisplayed(void);
-int MK61Emu_GetDisplayReg(void);
+int     MK61Emu_GetDisplayReg(void);
 uint32_t MK61Emu_GetComma(void);
-void MK61Emu_SetKeyPress(const int key1, const int key2);
-void MK61Emu_DoKeyPress(const int key1, const int key2);
-void MK61Emu_Cleanup(void);
+void    MK61Emu_SetKeyPress(const int key1, const int key2);
+void    MK61Emu_DoKeyPress(const int key1, const int key2);
+void    MK61Emu_Cleanup(void);
 //void MK61Emu_Cycle(void);
-u8* MK61Emu_UnpackRegster(u8 nReg, u8 *pack_number);
-void MK61Emu_WriteRegister(int nReg, char* buffer);
-void MK61Emu_ReadRegister(int nReg, char* buffer);
-bool MK61Emu_IsRunning(void);
-void MK61Emu_SetCode(int addr, uint8_t data);
+u8*     MK61Emu_UnpackRegster(u8 nReg, u8 *pack_number);
+void    MK61Emu_WriteRegister(int nReg, char* buffer);
+//void    MK61Emu_ReadRegister(int nReg, char* buffer);
+void    MK61Emu_ReadRegister(int nReg, char* buffer, const char* display_symbols);
+
+extern const char* read_stack_register(stack reg, char cvalue[14], const char* symbols_set);
+extern void write_stack_register(stack reg, char sign, char cmantissa[8], isize pow);
+
+usize   MK61Emu_Read_R_mantissa(usize nReg);
+usize   MK61Emu_Read_X_as_byte(void);
+bool    MK61Emu_IsRunning(void);
+
+void    MK61Emu_SetCode(int addr, uint8_t data);
 uint8_t MK61Emu_GetCode(int addr);
-void MK61Emu_GetCodePage(uint8_t* page);
+void    MK61Emu_GetCodePage(uint8_t* page);
+void    MK61Emu_ClearCodePage(void);
+
 const char* MK61Emu_GetIndicatorStr(const char* display_symbols);
-const char* MK61Emu_GetStackStr(StackRegister stack_reg);
-const char* MK61Emu_GetStackStr(StackRegister stack_reg, const char* symbols_set);
+//const char* MK61Emu_GetStackStr(StackRegister stack_reg);
+//const char* MK61Emu_GetStackStr(StackRegister stack_reg, const char* symbols_set);
+//void        MK61Emu_SetStackStr(StackRegister stack_reg, char sign, char mantissa[8], isize pow);
 void MK61Emu_SetAngleUnit(AngleUnit angle);
 AngleUnit MK61Emu_GetAngleUnit(void);
 

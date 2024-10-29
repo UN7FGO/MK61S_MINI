@@ -12,12 +12,15 @@ static const u32               KEY_RUN    =   30;
 static const u32               KEY_RET    =   31;
 static const u32               KEY_FRW    =   32;
 static const u32               KEY_BKW    =   33;
+static const u32               KEY_BASIC  =   36;
 static const u32               KEY_K      =   37;
 static const u32               KEY_F      =   38;
 static const u32               KEY_ESC    =   39;
 
 static constexpr i32 KEY_PUSH_B   =   1;
 static const i32 KEY_DEGREE       =   4;
+static constexpr i32 KEY_EPOWER   =   5;
+static constexpr i32 KEY_NEG      =   10;
 static const i32 KEY_GRADE        =   9;
 static const i32 KEY_RADIAN       =   14;
 static const i32 KEY_USER         =   19;

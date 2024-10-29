@@ -4,17 +4,23 @@
 #include "Arduino.h"
 #include "rust_types.h"
 
+//#define DEBUG_CORE61
+//#define DEBUG_MINI          // Отладочная информация по оболочке MK61S-MINI
+//#define DEBUG_SPIFLASH      // Отладочная информация по обработке внешней флеш памяти
+//#define DEBUG_DISASMBLER    // Отладочная информация по встроенному дисассемблеру МК61 инструкций
+//#define DEBUG_KBD           // Отладочная информация по клавиатурному драйверу
+//#define DEBUG_MENU          // Отладочная информация по системе меню
+//#define DEBUG_BASIC         // Отладочная информация по BASIC
+//#define DEBUG_LIBRARY       // Отладочная информация по библиотеке программ МК61
+//#define DEBUG_MK61E         // Отладочная информация расширяющая представление вывода терминала по МК61
+//#define EXPAND_RING_MK61    // Увеличить объем оперативной памяти кольца МК61 на еще один регистр IK130X
+//#define MK61_EXTENDED
 //#define B3_34
+#define TERMINAL
 #define SPI_FLASH
 //#define DEBUG
-//#define DEBUG_DISASMBLER
-//#define DEBUG_LOAD
-//#define DEBUG_SPIFLASH
-
-#if defined(DEBUG_DISASMBLER) || defined(DEBUG_LOAD) || defined(DEBUG_SPIFLASH)
- #define SERIAL_OUTPUT
- //#warning Serial module included!
-#endif
+//#define DEBUG_M61
+//#define BASIC
 
 //#define CDU
 //#define LK432
@@ -23,6 +29,98 @@
 //#define REVISION_V2
 #define MK61s
 //#define MK52s
+
+#if defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
+ #define SERIAL_OUTPUT
+ //#warning Serial module included!
+#endif
+
+#ifdef DEBUG_MINI
+  constexpr bool DBG_MINI = true;
+#else
+  constexpr bool DBG_MINI = false;
+#endif
+
+#ifdef DEBUG_SPIFLASH
+  constexpr bool DBG_SPIROM = true;
+#else
+  constexpr bool DBG_SPIROM = false;
+#endif
+
+#ifdef DEBUG_DISASMBLER
+  constexpr bool DBG_DISASM = true;
+#else
+  constexpr bool DBG_DISASM = false;
+#endif
+
+#ifdef DEBUG_KBD
+  constexpr bool DBG_KBD = true;
+#else
+  constexpr bool DBG_KBD = false;
+#endif
+
+#ifdef DEBUG_MENU
+  constexpr bool DBG_MENU = true;
+#else
+  constexpr bool DBG_MENU = false;
+#endif
+
+#ifdef DEBUG_BASIC
+  constexpr bool DBG_BASIC = true;
+#else
+  constexpr bool DBG_BASIC = false;
+#endif
+
+#ifdef DEBUG_CORE61
+  constexpr bool DBG_CORE61 = true;
+#else
+  constexpr bool DBG_CORE61 = false;
+#endif
+
+#ifdef DEBUG_LIBRARY
+  constexpr bool DBG_LIB61 = true;
+#else
+  constexpr bool DBG_LIB61 = false;
+#endif
+
+#ifdef DEBUG_MK61E
+  constexpr bool DBG_MK61E = true;
+#else
+  constexpr bool DBG_MK61E = false;
+#endif
+
+#ifdef ARDUINO_BLACKPILL_F411CE
+  const char chip_name[] = "STM32F411CE";
+  const char mem_text[] = "RAM:128 ROM:512";
+#else
+  #ifdef ARDUINO_BLACKPILL_F401CE
+    const char chip_name[] = "STM32F401CE";
+    const char mem_text[] = "RAM:96 ROM:512";
+  #else
+    #ifdef ARDUINO_BLACKPILL_F401CC
+      const char chip_name[] = "STM32F401CC";
+      const char mem_text[] = "RAM:64 ROM:256";
+    #else
+      #ifdef ARDUINO_GENERIC_F401CDUX
+        const char chip_name[] = "STM32F401CD";
+        const char mem_text[] = "RAM:96 ROM:384";
+      #else
+        #ifdef ARDUINO_GENERIC_F411CCUX
+          const char chip_name[] = "STM32F411CC";
+          const char mem_text[] = "RAM:128 ROM:256";
+        #else
+          #ifdef ARDUINO_GENERIC_F401CBYX
+            const char chip_name[] = "STM32F401CB";
+            const char mem_text[] = "RAM:64 ROM:128";
+          #else
+            const char chip_name[] = "unknown chip";
+            const char mem_text[] = "unknown memory";
+          #endif
+        #endif
+      #endif
+    #endif
+  #endif
+#endif
 
 #ifdef MK61s
       const char MODEL[] = "MK61s";
@@ -42,6 +140,12 @@ class class_calc_config {
     bool output_IP;
     class_calc_config(void) : disassm(false), output_IP(false) {}
 };
+
+namespace cfg {
+
+static constexpr isize  CLASSIC_MK61_QUANTS    =    72500;   // Константна замедления ядра mk61s в классичесокм режиме
+
+}
 
 // Конфигурация подключения микроконтроллера на макетной или печтаной плате 
 #ifdef CDU
@@ -115,6 +219,7 @@ class class_calc_config {
     static const u8   PIN_J2          =   PB3;
     static const u8   PIN_BUZZER      =   PB10;
     static const u8   PIN_SPIFLASH_CS =   PA4;
+    static const u8   PIN_LED         =   PC13;
   #else
     #ifdef REVISION_V3
  /* REVISION_V3 Описание ног для STM32F411CEU6 aka BlackPill MK61s-mini_v3*/
@@ -144,26 +249,28 @@ class class_calc_config {
       static const u8   PIN_SPIFLASH_CS =   PA4;
     #else 
  /* REVISION_V1 Описание ног для STM32F411CEU6 aka BlackPill MK61s-mini_v1*/
-      static const u8   PIN_LCD_RS      =   PB1;
-      static const u8   PIN_LCD_E       =   PB0;
-      static const u8   PIN_LCD_DB4     =   PA3;
-      static const u8   PIN_LCD_DB5     =   PA2;
-      static const u8   PIN_LCD_DB6     =   PA1;
-      static const u8   PIN_LCD_DB7     =   PA0;
-      static const u8   PIN_KBD_COL0    =   PB12;
-      static const u8   PIN_KBD_COL1    =   PB13;
-      static const u8   PIN_KBD_COL2    =   PB14;
-      static const u8   PIN_KBD_COL3    =   PB15;
-      static const u8   PIN_KBD_COL4    =   PA8;
-      static const u8   PIN_KBD_COL5    =   PA11;
-      static const u8   PIN_KBD_COL6    =   PA12;
-      static const u8   PIN_KBD_COL7    =   PA15;
-      static const u8   PIN_KBD_ROW4    =   PB8;
-      static const u8   PIN_KBD_ROW3    =   PB7;
-      static const u8   PIN_KBD_ROW2    =   PB6;
-      static const u8   PIN_KBD_ROW1    =   PB5;
-      static const u8   PIN_KBD_ROW0    =   PB4;
-      static const u8   PIN_SPIFLASH_CS =   PA4;
+      static constexpr usize   PIN_LCD_RS      =   PB1;
+      static constexpr usize   PIN_LCD_E       =   PB0;
+      static constexpr usize   PIN_LCD_DB4     =   PA3;
+      static constexpr usize   PIN_LCD_DB5     =   PA2;
+      static constexpr usize   PIN_LCD_DB6     =   PA1;
+      static constexpr usize   PIN_LCD_DB7     =   PA0;
+      static constexpr usize   PIN_KBD_COL0    =   PB12;
+      static constexpr usize   PIN_KBD_COL1    =   PB13;
+      static constexpr usize   PIN_KBD_COL2    =   PB14;
+      static constexpr usize   PIN_KBD_COL3    =   PB15;
+      static constexpr usize   PIN_KBD_COL4    =   PA8;
+      static constexpr usize   PIN_KBD_COL5    =   PA11;
+      static constexpr usize   PIN_KBD_COL6    =   PA12;
+      static constexpr usize   PIN_KBD_COL7    =   PA15;
+      static constexpr usize   PIN_KBD_ROW4    =   PB8;
+      static constexpr usize   PIN_KBD_ROW3    =   PB7;
+      static constexpr usize   PIN_KBD_ROW2    =   PB6;
+      static constexpr usize   PIN_KBD_ROW1    =   PB5;
+      static constexpr usize   PIN_KBD_ROW0    =   PB4;
+      static constexpr usize   PIN_SPIFLASH_CS =   PA4;
+      static constexpr usize   PIN_BUZZER      =   PB10;
+      static constexpr usize   PIN_LED         =   PC13;
     #endif
   #endif
  #endif  
