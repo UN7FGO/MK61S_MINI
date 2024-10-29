@@ -2,12 +2,22 @@
 #define MENU_CLASS
 
 #include  "keyboard.hpp"
+#include  "basic.hpp"
 #include  "tools.hpp"
 #include  "library_pmk.hpp"
 
+namespace action {
+  static constexpr bool MENU_EXIT = true;
+  static constexpr bool MENU_BACK = false;
+}
+
 typedef bool (*menu_action)(void);  // возвращает необходимость покинуть главное меню 
 
-static constexpr int MENU_PUNCT = 4;
+#ifdef BASIC
+  static constexpr int MENU_PUNCT = 11
+#else 
+  static constexpr int MENU_PUNCT = 9;
+#endif
 
 struct  t_punct {
     u8            size;
@@ -15,12 +25,17 @@ struct  t_punct {
     char          text[];
 };
 
-extern bool InfoData(void);
 extern bool mk61_library_select(void);
+extern bool mk61_games_select(void);
+extern bool TurnSound(void);
+extern bool TurnSpeed(void);
 
 namespace library_mk61 {
   const   int             COUNT_PUNCTS = MENU_PUNCT;
-  extern  const t_punct*  MENU[MENU_PUNCT];
+  extern  t_punct*        MENU[MENU_PUNCT];
+  
+  extern  bool  sound_is_on(void);
+  extern  bool  speed_is_max(void);
 }
 
 class class_menu {
@@ -31,52 +46,11 @@ class class_menu {
     u8 previous_up;
     t_punct** puncts;
 
-    void draw(void);/* {
-      const int delta = (active_punct + 1) - SIZE_MENU_WINDOW;
-      const int up = (delta <= 0)? 0 : delta;
-
-      for(int i=0; i < SIZE_MENU_WINDOW; i++) {
-        lcd.setCursor(0,  i); 
-        const int real_index = i + up;
-        const int previous_real_index = i + previous_up;
-
-          // формируем постоянную часть пункта меню
-          lcd.print( (active_punct == real_index)?  '>'  :  ' ' );
-          lcd.print(puncts[real_index]->text);
-
-          int previous_punct_size = puncts[previous_real_index]->size;
-          const int size = puncts[real_index]->size;
-          // формируем переменную часть пункта меню
-          while(previous_punct_size-- > size) {
-            lcd.print(' ');
-          }
-      }
-      previous_up = up;
-    }*/
+    void draw(void);
 
   public:
     class_menu(t_punct** punts_of_menu, int count_of_puncts) : MENU_PUNCT_COUNT(count_of_puncts), active_punct(0), previous_up(0), puncts(punts_of_menu) {};
-    void select(void);/* {
-      do{
-        draw();
-        const i32 last_key_code = keyboard.get_key_wait();
-        switch(last_key_code) {
-          case KEY_RIGHT_PRESS:
-              if(active_punct < (MENU_PUNCT_COUNT-1)) active_punct++;
-            break;
-          case KEY_LEFT_PRESS:
-              if(active_punct > 0) active_punct--;
-            break;
-          case KEY_OK_PRESS:
-            #ifdef SERIAL_OUTPUT
-              Serial.print("Select menu: '"); Serial.print(puncts[active_punct]->text); Serial.println('\'');
-            #endif 
-            if(puncts[active_punct]->action() == true) return;
-          case KEY_ESC_PRESS:
-            return; // отмена
-        }
-      } while(true);
-    }*/
+    void select(void);
 };
 
 #endif
