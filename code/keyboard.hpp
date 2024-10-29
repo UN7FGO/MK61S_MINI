@@ -1,43 +1,30 @@
 #ifndef CLASS_KEYBOARD
 #define CLASS_KEYBOARD
-#include "Arduino.h"
-#include "rust_types.h"
-#include "config.h"
 
-static const u32  KEY_IN_ROW             =   5;
-static const u32  KEY_IN_COLUMN          =   8;
-static const u32  LAST_SCAN_ROW          =   KEY_IN_ROW - 1;
-static const u32  KEY_IN_KEYBOARD        =   KEY_IN_ROW * KEY_IN_COLUMN;
-static const u32  TIME_DEBOUNCE          =   30;
-static const u32  TIME_SCAN_LINE         =   40;
+#include "Arduino.h"
+#include "config.h"
+#include "tools.hpp"
+#include "rust_types.h"
+#include "debug.h"
+
+static constexpr usize KEY_IN_ROW             =   5;
+static constexpr usize KEY_IN_COLUMN          =   8;
+static constexpr usize LAST_SCAN_ROW          =   KEY_IN_ROW - 1;
+static constexpr usize KEY_IN_KEYBOARD        =   KEY_IN_ROW * KEY_IN_COLUMN;
+static constexpr usize KEY_RELEASE_BIT        =   6;
+
+static constexpr t_time_ms  TIME_DEBOUNCE     =   30;
+static constexpr t_time_ms  TIME_SCAN_LINE    =   30;
+static constexpr t_time_ms  KEY_HOLD_MS       =   1500;  // константный период времени удержания клавиши до генерации события
 
 enum class key_state {PRESSED=0, RELEASED=0x40};
 
-const   key_state PRESS             =   key_state::PRESSED;
-const   key_state RELEASE           =   key_state::RELEASED;
+static constexpr key_state PRESS             =   key_state::PRESSED;
+static constexpr key_state RELEASE           =   key_state::RELEASED;
 
-class  TKeyMask { // биты линий 1, 2, 4, 8, 16
-  public:
-    u8  now, before;  // маска сейчас и до того 
-// TO DO изменить алгоритм сдвинуть test_source один раз на from бит потом проверять только первый бит и не двигать маску!
-    u32 get_position(u32 from) {  // -1 - нет 1 ни в одном бите
-      //u32 test_mask = 1 << from;
-      u32 test_source = (now ^ before) >> from;
-
-      for(u32 i = from; i < KEY_IN_COLUMN; i++) {
-        if((test_source & 1) != 0) return i;
-        test_source >>= 1;
-      }
-
-/*
-      for(int i = from; i < KEY_IN_COLUMN; i++) {
-        if((test_mask & test_source) != 0) return i;
-        test_mask <<= 1;
-      }
-*/
-      return KEY_IN_COLUMN;
-    }
-};
+extern void idle_main_process(void);
+extern void event_hold_key(i32 holded_key, i32 hold_quant);
+extern void event_unhold_key(i32 unholded_key);
 
 class   class_circular_buffer {
   private:
@@ -60,7 +47,11 @@ class   class_circular_buffer {
       return write_count == read_count;
     }
 
-    i8 get(u32 index) {
+    i8  top(void) {
+      return get(0);
+    }
+
+    i8  get(u32 index) {
       if(IsEmpty() || index > count()) return -1;
       return buff[(read_count + index) & MASK];
     }
@@ -86,6 +77,7 @@ class   class_circular_buffer {
         return true;
       }
     }
+
     i32  read(void) {
       if(IsEmpty()) { // буфер пуст 
         #ifdef DEBUG
@@ -104,37 +96,75 @@ class   class_circular_buffer {
     }
 };
 
+static const   u8   data_pins[KEY_IN_COLUMN]   =   {PIN_KBD_COL0, PIN_KBD_COL1, PIN_KBD_COL2, PIN_KBD_COL3, PIN_KBD_COL4, PIN_KBD_COL5, PIN_KBD_COL6, PIN_KBD_COL7};
+static const   u8   pins[KEY_IN_ROW]           =   {PIN_KBD_ROW4, PIN_KBD_ROW3, PIN_KBD_ROW2, PIN_KBD_ROW1, PIN_KBD_ROW0};
+
+inline isize get_set_bit_position(u8 &row_code) {
+  for(usize bit_position = 0; bit_position <= KEY_IN_COLUMN; bit_position++){
+    if((row_code & 1) != 0) return bit_position;
+    row_code >>= 1;
+  }
+  return -1;
+}
+
+inline usize bus_in(void) {
+  usize input_data = 0;
+  for(int pin : data_pins) input_data = (input_data << 1) | digitalRead(pin);
+  return input_data;
+}
+
+struct  TRowKeyStatus { // биты линий 1, 2, 4, 8, 16
+  public:
+    u8  now,     // данные сейчас 
+        changed; // изменившиеся колонки
+    u8 input(void) {
+      const u8 before = now;
+      now   = (u8) bus_in();
+      return changed = now ^ before;
+    }
+    u8 get_state(usize column) {return ((~now >> column) & 1) << KEY_RELEASE_BIT;}
+};
+
 class   class_keyboard {
   private:
-    const   u8   data_pins[KEY_IN_COLUMN]   =   {PIN_KBD_COL0, PIN_KBD_COL1, PIN_KBD_COL2, PIN_KBD_COL3, PIN_KBD_COL4, PIN_KBD_COL5, PIN_KBD_COL6, PIN_KBD_COL7};
-    const   u8   pins[KEY_IN_ROW]           =   {PIN_KBD_ROW4, PIN_KBD_ROW3, PIN_KBD_ROW2, PIN_KBD_ROW1, PIN_KBD_ROW0};
+    t_time_ms       press_time;         // время в ms последнего нажатия (без отжатия)
+    i32             holded_scan_code;   // скан код клавишы взятой на удержание
+    i32             hold_quant_counter; // счетчик квантов удержания
+
+    bool	is_release(i32 scan_code) {
+      return ((scan_code & (1 << KEY_RELEASE_BIT)) != 0);
+    }
+
+    void 	check_hold_key(void) {
+      if(holded_scan_code < 0) return;
+
+      const t_time_ms now = millis();
+      if(press_time >= now) return;
+      hold_quant_counter++;
+      dbgln(KBD, "hold time ", now, " hold count ", hold_quant_counter, " scan #", holded_scan_code);
+      press_time = now + KEY_HOLD_MS;   // продалжаем опрашивать удержание до сброса удерживаемого скан-кода
+      event_hold_key(holded_scan_code, hold_quant_counter); // генерация события удержания кнопки
+    }
 
   public:
 
-    u32         scan_line;
-    u32         time_switch_scan_line;
-    u32         time_debounced_key;
-    TKeyMask    keymask[KEY_IN_ROW];
+    usize         scan_line;
+    u32           time_switch_scan_line;
+    u32           time_debounced_key;
+
+    TRowKeyStatus RowArray[KEY_IN_ROW];
+
     class_circular_buffer  cir_buff;
 
-    class_keyboard(void) : scan_line(0) {}
+    class_keyboard(void) : holded_scan_code(-1), scan_line(0) {}
 
-    i32 get_code(u32 key_line) { // no code -1
-      const i32 BitPosition = keymask[key_line].get_position(0);
-      return (BitPosition * KEY_IN_ROW) + key_line;
-    }
-    
     void  Init(void) {
       for(u32 i=0; i < KEY_IN_ROW; i++) {
-        keymask[i].now = 0;
-        keymask[i].before = 0;
+        RowArray[i] = {.now = 0, .changed = 0};
         digitalWrite(pins[i], HIGH);
         pinMode(pins[i], INPUT);
       }
       for(usize pin : data_pins) pinMode(pin, INPUT_PULLDOWN);
-/*      for(u32 i=0; i < KEY_IN_COLUMN; i++) {
-        pinMode(data_pins[i], INPUT_PULLDOWN);
-      }*/
       cir_buff.Init();
 
       process_init();
@@ -146,28 +176,15 @@ class   class_keyboard {
       time_debounced_key    = init_time + TIME_DEBOUNCE;
     }
 
-    void  process(u32 time) {
-      if (time >= time_switch_scan_line) { // переключение следующей сканлинии клавиатуры
-        next_scan_line();
-
-        const u32 now = millis();
-        time_debounced_key = now + TIME_DEBOUNCE;       // время до прекращеняи дребезга контактов кнопки 
-        time_switch_scan_line = now + TIME_SCAN_LINE;   // время следующего переключения сканлинии клавиатуры (сканстолбца)
-      }
-  
-      if (time >= time_debounced_key) {  // время когда дребезг контактов кнопки (если она была нажата) прекратился
-        check_scan_line();
-      }
-    }
-
-    i32  get_key_wait(void) {
-      i32 keycode;
+    i32   get_key_wait(void) {
       do {
-        process(millis());
-        keycode = get_key(key_state::PRESSED);
-      } while (keycode < 0);
-
-      return keycode;
+        idle_main_process();  // отдаем безделье в основной поток бездействия
+        const i32 scan_code = scan_and_debounced();
+        if( scan_code >= 0 && scan_code < (1 << KEY_RELEASE_BIT) ) {
+          exclude_before(scan_code);
+          return scan_code;
+        } 
+      } while (true);
     }
 
     bool  check_key(i32 key_in, key_state state) { // поиск в буфере клавиши с конкретным статусом
@@ -194,7 +211,7 @@ class   class_keyboard {
         #ifdef DEBUG
           Serial.print(" get_key "); Serial.println(key_code, HEX);
         #endif
-        if((key_code & 0x40) == (i8) state){
+        if((key_code & (1 << KEY_RELEASE_BIT)) == (i8) state){
           #ifdef DEBUG
             Serial.print(" get_key ret "); Serial.println(key_code, HEX);
           #endif
@@ -205,54 +222,49 @@ class   class_keyboard {
       return -1;
     }
 
-    u32   get_keydata(void) { // Считать данные с порта данных клавиатуры
-      u32 data = 0;
-      for(int pin : data_pins) data = (data<<1) | digitalRead(pin);
-      /*{ 
-        data <<= 1;
-        data |= digitalRead(pin);
-      }
-      for(u32 i=0; i < KEY_IN_COLUMN; i++) {
-        data <<= 1;
-        data |= digitalRead(data_pins[i]);
-      }*/
-      return data;
+    void  clear_hold_key(void) {
+      holded_scan_code = -1;
     }
 
-    i32   check_scan_line(void) {
-      const u8 now_mask = get_keydata(); 
-      const u8 last_mask = keymask[scan_line].now;
+    isize scan(void) {
+      u8 bit_changed = RowArray[scan_line].input();
+        const u8 row = scan_line;
+    
+        pinMode(pins[scan_line], INPUT);
+        if(scan_line == (KEY_IN_ROW-1)) scan_line = 0; else scan_line++;
+        pinMode(pins[scan_line], OUTPUT);
+        
 
-      if(now_mask != last_mask) { // key change
-        keymask[scan_line] = {.now = now_mask, .before = last_mask};  // обновляем маски было и стало
-        const u32 key_code = get_code(scan_line);
-        #ifdef DEBUG
-          Serial.print(now_mask); Serial.write(' ');
-          Serial.print(last_mask); Serial.write(' ');
-          Serial.print(keymask[scan_line].get_position(0)); Serial.write(' ');
-          Serial.print(key_code, HEX); Serial.write('.');
-        #endif
+      if(bit_changed == 0) {  // нет изменений в столбцах клавиатуры (выход)
+         check_hold_key();      // Проверка врремени удержания 
+         return -1;             
+      }
 
-        if(key_code < KEY_IN_KEYBOARD) {
-          const i8 full_key_code = key_code | ((now_mask == 0)? 0x40 : 0);
-          cir_buff.write(full_key_code);
-          #ifdef DEBUG
-            Serial.println(full_key_code, HEX);
-          #endif
+      const usize column = get_set_bit_position(bit_changed);
+      const u8 state     = RowArray[row].get_state(column);
+      const u8 code      = (column*KEY_IN_ROW + row);
+      const u8 scan_code = state | code;
+
+      dbgln(KBD, "changed ", bit_changed, ",column ", column, ",row ", row,", scan_code ", scan_code);
+      
+      if(state == 0) sound(PIN_BUZZER, 140, 14);
+      cir_buff.write(scan_code);
+
+      if(state == 0) {
+        // было нажатие, принимаем на удержание клавишу (учет только одного последнего удержания)
+        hold_quant_counter  =   -1;
+        holded_scan_code    =   scan_code;
+        press_time          =   millis() + KEY_HOLD_MS;
+        dbgln(KBD, "fixed press time: ", press_time, "ms, (hold) scan_code #", scan_code);
+      } else {
+        // было отжатие удержанной клавиши
+        if(holded_scan_code == code) {
+          event_unhold_key(holded_scan_code);
+          holded_scan_code = -1; // снимаем удержание 
         }
-        return (i32) key_code;
       }
-      return -1;
-    }
 
-    void  next_scan_line(void) {
-      if(scan_line == LAST_SCAN_ROW) { // Переход с включенной ранее последней линии сканирования на первую
-        pinMode(pins[LAST_SCAN_ROW], INPUT);
-        scan_line = 0;
-      } else { // Переход на очередную линию сканирования 
-        pinMode(pins[scan_line++], INPUT);
-      }
-      pinMode(pins[scan_line], OUTPUT); 
+      return (isize) scan_code;
     }
 
     void  exclude_before(i32 before_key) { // уберать все коды клавиш в том числе before_key, из очереди клавиатуры
@@ -270,14 +282,7 @@ class   class_keyboard {
         scan_line = KEY_IN_ROW-1;
     }
 
-    bool  is_released() {
-      return (keymask[scan_line].now == 0);
-    }
-
-    void  scan(void) {
-      check_scan_line();
-      next_scan_line();
-    }
+    isize  scan_and_debounced(void);
 };
 
 extern class_keyboard keyboard;

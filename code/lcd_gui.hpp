@@ -3,6 +3,7 @@
 #include  "config.h"
 #include  "rust_types.h"
 #include  <LiquidCrystal.h>
+#include  "mk61emu_core.h"
 
 extern LiquidCrystal lcd;
 
@@ -35,8 +36,9 @@ static const u8 CH_RUS            = 0xD1;
 class class_LCD_Label {
   private:
     u8 x, y;
-  
+
   public:
+
     class_LCD_Label(u8 to_x, u8 to_y) : x(to_x), y(to_y) {}
     void print(const char* text) const {
       lcd.setCursor(x, y);
@@ -54,6 +56,64 @@ class class_LCD_Label {
       lcd.setCursor(x, y);
       if(num < 10) lcd.print(' ');
       lcd.print(num, HEX);
+    }
+};
+
+class LCD_GRD_Label {
+  private:
+    
+    static constexpr u8 X = 6;
+    static constexpr u8 Y = 0;
+
+    const u32 ANGLE_UNIT_TEXT[3] = {
+      0 << 24 | ' ' << 16   | ' ' << 8   |     'P',  // "Р  "
+      0 << 24 | G_RUS << 16 | ' ' << 8   |     ' ',  // "  Г"
+      0 << 24 | D_RUS << 16 | 'P' << 8   |   G_RUS   // "ГРД"
+    };
+    
+    bool   on;
+
+  public:
+
+    LCD_GRD_Label(void) : on(true) {};
+
+    void  disable(void) {
+      on = false;
+      lcd.setCursor(X, Y); print("  "); // clear
+    };
+
+    void  enable(void)  {on = true;};
+
+    void  print(AngleUnit angle) {
+      if(on) {
+        lcd.setCursor(X, Y); lcd.print((const char*) &ANGLE_UNIT_TEXT[angle - RADIAN]);
+      }
+    }
+
+    void  print(const char* text) const {
+      if(on) {
+        lcd.setCursor(X, Y); lcd.print(text);
+      }
+    }
+
+    void  print(char symbol) const {
+      if(on) {
+        lcd.setCursor(X, Y); lcd.print(symbol);
+      }
+    }
+
+    void  print(int num) const {
+      if(on) {
+        lcd.setCursor(X, Y); lcd.print(num);
+      }
+    }
+
+    void  print_hex(int num) const {
+      if(on) {
+        lcd.setCursor(X, Y);
+        if(num < 10) lcd.print(' ');
+        lcd.print(num, HEX);
+      }
     }
 };
 
@@ -145,7 +205,7 @@ class class_LCD_fonts {
       0b10000,
       0b10000,
       0b10000,
-      0b10000,
+      0b00000,
       0b00000,
     //const u8 POWSQR_bit[8] = {
       0b11100,

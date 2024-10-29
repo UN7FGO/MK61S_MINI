@@ -6,14 +6,21 @@
 #include "mk61emu_core.h"
 #include "rust_types.h"
 #include "tools.hpp"
+#include "debug.h"
 
 extern  class_mk61_core     mk61s;
 extern  class_calc_config   config;
 
-const int LEN_DISASM_LINE = 11;
+const int LEN_DISASM_LINE = 5;
 
 class class_disassm_mk61 {
   private:
+    static constexpr u8 X = 0;
+    static constexpr u8 Y = 0;
+
+    bool  lcd_enable;        // up line lCD disassembler of MK61 enable=1/disable=0
+    u8    cache_IP_mk61;
+
     const u32 mk61_disassm_50_60[15] = {
       ' ' << 24 | ' ' << 16   | P_RUS << 8 | 'C',
       ' ' << 24 | ' ' << 16   | P_RUS << 8 | B_RUS,
@@ -84,24 +91,24 @@ class class_disassm_mk61 {
       '"' << 24 | LCD_QUOTE_CHAR << 16   | LCD_RT_ARROW_CHAR << 8   | LCD_GRAD_CHAR,  // 0x3D o->'" (повтор 2A)
       ' ' << 24 | 'y' << 16   | LCD_LT_ARROW_CHAR << 8  | 'x',                        // 0x3E x<-y (и еще x->x1)
     };
-    u8   lcd_enable;        // up line lCD disassembler of MK61 enable=1/disable=0
-    u8   cache_IP_mk61;
 
     u8   get_register_symbol(u8 code) {
       return (code < 0x3A)? code : (code == 0x3D)? D_RUS : code + 7;
     }
-  public:
-    class_disassm_mk61(void) : lcd_enable(0), cache_IP_mk61(-1) {};
 
-    bool is_enabled(void)  { return lcd_enable; }
-    bool is_update(char* buffer) {
-      if(is_enabled()) {
-        
+    inline bool is_update(char* buffer) {
+      if(lcd_enable) {
         const u8 IP_mk61 = mk61s.get_IP(); //MK61Emu_get_IP();
+
         if(IP_mk61 != cache_IP_mk61) { // счетчик команд изменился
+          if(config.output_IP) {
+            lcd.setCursor(14, 1); print_hex(IP_mk61);
+          }
+
           cache_IP_mk61 = IP_mk61;
 
-          memset(buffer, ' ', LEN_DISASM_LINE - 1); buffer[LEN_DISASM_LINE] = 0;
+          /*memset(buffer, ' ', LEN_DISASM_LINE); buffer[LEN_DISASM_LINE] = 0;*/
+          *((u32*) &buffer[0]) = (u32) 0; *((u16*) &buffer[4]) = (u16) 0;
           // дизассемблируем с адреса IP_mk61     DISP [___ ___ ___]
           const u8 addr = IP_mk61 - 1;
           if(addr < 0xC3) { // до адреса 0xC3
@@ -172,18 +179,51 @@ class class_disassm_mk61 {
       }
       return false;
     }
-    void on(void) {
-      lcd_enable = 1;
+
+  public:
+    class_disassm_mk61(void) : lcd_enable(false), cache_IP_mk61(-1) {};
+
+    inline void  print(void) {
+      char disasm[LEN_DISASM_LINE+1];
+
+      if(is_update(&disasm[0])) { // Включен режим отображения дизассемблера МК61
+        lcd.setCursor(X, Y); lcd.print(disasm);
+      }
+    }
+
+    void  print(const char* text) {
+      lcd.setCursor(X, Y); lcd.print(text);
+    }
+
+    void  print_hex(int num) const {
+      if(num < 10) lcd.print(' ');
+      lcd.print(num, HEX);
+    }
+
+    void  enable(void) {
+      dbgln(DISASM, "disassembler ON!")
+      lcd_enable = true;
       cache_IP_mk61 = mk61s.get_IP() + 1;
+      print();
     }
-    void off(void) {
-      lcd_enable = 0;
+
+    void  disable(void) {
+      dbgln(DISASM, "disassembler OFF!")
+      lcd_enable = false;
+      lcd.setCursor(X, Y); lcd.print("      ");
     }
-    bool turn_on_off(void) { 
-      if (lcd_enable == 0) 
-        on();
+
+    void  disable(const char* text) {
+      dbgln(DISASM, "disassembler OFF!")
+      lcd_enable = false;
+      lcd.setCursor(X, Y); lcd.print(text);
+    }
+
+    bool  turn_on_off(void) { 
+      if (lcd_enable) 
+        disable();
       else
-        off();
+        enable();
       return lcd_enable;
     }
 };
