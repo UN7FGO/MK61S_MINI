@@ -18,18 +18,18 @@ static const u32               KEY_F      =   38;
 static const u32               KEY_ESC    =   39;
 
 static constexpr i32 KEY_PUSH_B   =   1;
-static const i32 KEY_DEGREE       =   4;
+static constexpr i32 KEY_DEGREE   =   4;
 static constexpr i32 KEY_EPOWER   =   5;
 static constexpr i32 KEY_NEG      =   10;
-static const i32 KEY_GRADE        =   9;
-static const i32 KEY_RADIAN       =   14;
-static const i32 KEY_USER         =   19;
+static constexpr i32 KEY_GRADE    =   9;
+static constexpr i32 KEY_RADIAN   =   14;
+static constexpr i32 KEY_USER     =   19;
 static constexpr i32 KEY_SAVE     =   36;
 static constexpr i32 KEY_LOAD     =   35;
-static const i32 KEY_LEFT         =   34;
-static const i32 KEY_RIGHT        =   24;
+static constexpr i32 KEY_LEFT     =   34;
+static constexpr i32 KEY_RIGHT    =   24;
 static constexpr i32 KEY_ALPHA    =   KEY_F;
-static const i32 KEY_OK           =   29;
+static constexpr i32 KEY_OK       =   29;
 
 static const i32 KEY_LEFT_PRESS   =   KEY_LEFT  | (i32) key_state::PRESSED;
 static const i32 KEY_RIGHT_PRESS  =   KEY_RIGHT | (i32) key_state::PRESSED;
@@ -48,6 +48,22 @@ class __attribute__((__packed__)) TMK61_cross_key {
       return *(u16*) this;
     }
 };
+
+enum class sw : u32 {
+  CX  =00, Bx, MUL, DIV, 
+  POW =05, XY, ADD, SUB, 
+  NEG =10, _3, _6, _9, 
+  DOT =15, _2, _5, _8, 
+  _0  =20, _1, _4, _7, 
+  JSR =25, JP, xP, Px,
+  RUN =30, RET, FW, BK,
+  NON =35, NO1, K, F
+};
+
+constexpr u32 seq(sw KEY0, sw KEY1, sw KEY2, sw KEY3) {return i32 ( ((u32) KEY3 << 24) | ((u32) KEY2 << 16) | ((u32) KEY1 << 8) | (u32) KEY0 );}
+constexpr u32 seq(sw KEY0, sw KEY1, sw KEY2) {return i32 (0xFF000000 | ( ((u32) KEY2 << 16) | ((u32) KEY1 << 8) | (u32) KEY0 ));}
+constexpr u32 seq(sw KEY0, sw KEY1) {return i32 (0xFFFF0000 | ( ((u32) KEY1 << 8) | (u32) KEY0 ));}
+constexpr u32 seq(sw KEY) {return (i32) i32 (0xFFFFFF00 | (u32) KEY);}
 
 static const TMK61_cross_key   NON     =   {.x=0, .y=0};
 static const TMK61_cross_key   F       =   {.x=11, .y=9};  // F
