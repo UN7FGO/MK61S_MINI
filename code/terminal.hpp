@@ -16,8 +16,34 @@
 #include "disasm.hpp"
 #include "tools.hpp"
 
-const char terminal_symbols[16] = {
+static const char terminal_symbols[16] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'L', 'C', '\303', 'E', ' '
+};
+static constexpr u32 seqNOP = seq(sw::K,sw::_0);
+static const u32 key_sequence_on_cmd[15*16] = {
+  seq(sw::_0),  seq(sw::_1),  seq(sw::_2),  seq(sw::_3),  seq(sw::_4), seq(sw::_5), seq(sw::_6), seq(sw::_7), seq(sw::_8), seq(sw::_9), seq(sw::DOT), seq(sw::NEG), seq(sw::POW), seq(sw::CX), seq(sw::Bx), seq(sw::F,sw::Bx),
+  seq(sw::ADD), seq(sw::SUB), seq(sw::MUL), seq(sw::DIV), seq(sw::XY), seq(sw::F,sw::DOT), seq(sw::F,sw::_5), seq(sw::F,sw::_1), seq(sw::F,sw::_2), seq(sw::F,sw::_4), seq(sw::F,sw::_5), seq(sw::F,sw::_6), seq(sw::F,sw::_7), seq(sw::F,sw::_8), seq(sw::F,sw::_9), seqNOP,
+  seq(sw::F,sw::ADD),seq(sw::F,sw::SUB),seq(sw::F,sw::MUL),seq(sw::F,sw::DIV),seq(sw::F,sw::XY),seq(sw::F,sw::DOT),seq(sw::K,sw::ADD),seq(sw::K,sw::SUB),seq(sw::K,sw::MUL),seq(sw::K,sw::DIV),seq(sw::K,sw::XY),seqNOP,seqNOP,seqNOP,seqNOP,seqNOP,
+  seq(sw::K,sw::_3),seq(sw::K,sw::_4),seq(sw::K,sw::_5),seq(sw::K,sw::_6),seq(sw::K,sw::_7),seq(sw::K,sw::_8),seq(sw::K,sw::_9),seq(sw::K,sw::DOT),seq(sw::K,sw::NEG),seq(sw::K,sw::POW),seq(sw::K,sw::CX),seq(sw::K,sw::Bx),seqNOP,seqNOP,seqNOP,seqNOP,
+  seq(sw::xP,sw::_0),seq(sw::xP,sw::_1),seq(sw::xP,sw::_2),seq(sw::xP,sw::_3),seq(sw::xP,sw::_4),seq(sw::xP,sw::_5),seq(sw::xP,sw::_6),seq(sw::xP,sw::_7),seq(sw::xP,sw::_8),seq(sw::xP,sw::_9),seq(sw::xP,sw::DOT),seq(sw::xP,sw::NEG),seq(sw::xP,sw::POW),seq(sw::xP,sw::CX),seq(sw::xP,sw::Bx),seqNOP,
+  seq(sw::RUN),seq(sw::JP),seq(sw::RET),seq(sw::JSR),seqNOP,seq(sw::K,sw::_1),seq(sw::K,sw::_2),seq(sw::F,sw::RUN),seq(sw::F,sw::JP),seq(sw::F,sw::RET),seq(sw::F,sw::JSR),seq(sw::F,sw::xP),seq(sw::F,sw::BK),seq(sw::F,sw::Px),seq(sw::F,sw::FW),seqNOP,
+  seq(sw::Px,sw::_0),seq(sw::Px,sw::_1),seq(sw::Px,sw::_2),seq(sw::Px,sw::_3),seq(sw::Px,sw::_4),seq(sw::Px,sw::_5),seq(sw::Px,sw::_6),seq(sw::Px,sw::_7),seq(sw::Px,sw::_8),seq(sw::Px,sw::_9),seq(sw::Px,sw::DOT),seq(sw::Px,sw::NEG),seq(sw::Px,sw::POW),seq(sw::Px,sw::CX),seq(sw::Px,sw::Bx),seqNOP,
+  seq(sw::K,sw::RUN,sw::_0),seq(sw::K,sw::RUN,sw::_1),seq(sw::K,sw::RUN,sw::_2),seq(sw::K,sw::RUN,sw::_3),seq(sw::K,sw::RUN,sw::_4),seq(sw::K,sw::RUN,sw::_5),seq(sw::K,sw::RUN,sw::_6),seq(sw::K,sw::RUN,sw::_7),
+    seq(sw::K,sw::RUN,sw::_8),seq(sw::K,sw::RUN,sw::_9),seq(sw::K,sw::RUN,sw::DOT),seq(sw::K,sw::RUN,sw::NEG),seq(sw::K,sw::RUN,sw::POW),seq(sw::K,sw::RUN,sw::CX),seq(sw::K,sw::RUN,sw::Bx),seqNOP,
+  seq(sw::K,sw::JP,sw::_0),seq(sw::K,sw::JP,sw::_1),seq(sw::K,sw::JP,sw::_2),seq(sw::K,sw::JP,sw::_3),seq(sw::K,sw::JP,sw::_4),seq(sw::K,sw::JP,sw::_5),seq(sw::K,sw::JP,sw::_6),seq(sw::K,sw::JP,sw::_7),
+    seq(sw::K,sw::JP,sw::_8),seq(sw::K,sw::JP,sw::_9),seq(sw::K,sw::JP,sw::DOT),seq(sw::K,sw::JP,sw::NEG),seq(sw::K,sw::JP,sw::POW),seq(sw::K,sw::JP,sw::CX),seq(sw::K,sw::JP,sw::Bx),seqNOP,
+  seq(sw::K,sw::RET,sw::_0),seq(sw::K,sw::RET,sw::_1),seq(sw::K,sw::RET,sw::_2),seq(sw::K,sw::RET,sw::_3),seq(sw::K,sw::RET,sw::_4),seq(sw::K,sw::RET,sw::_5),seq(sw::K,sw::RET,sw::_6),seq(sw::K,sw::RET,sw::_7),
+    seq(sw::K,sw::RET,sw::_8),seq(sw::K,sw::RET,sw::_9),seq(sw::K,sw::RET,sw::DOT),seq(sw::K,sw::RET,sw::NEG),seq(sw::K,sw::RET,sw::POW),seq(sw::K,sw::RET,sw::CX),seq(sw::K,sw::RET,sw::Bx),seqNOP,
+  seq(sw::K,sw::JSR,sw::_0),seq(sw::K,sw::JSR,sw::_1),seq(sw::K,sw::JSR,sw::_2),seq(sw::K,sw::JSR,sw::_3),seq(sw::K,sw::JSR,sw::_4),seq(sw::K,sw::JSR,sw::_5),seq(sw::K,sw::JSR,sw::_6),seq(sw::K,sw::JSR,sw::_7),
+    seq(sw::K,sw::JSR,sw::_8),seq(sw::K,sw::JSR,sw::_9),seq(sw::K,sw::JSR,sw::DOT),seq(sw::K,sw::JSR,sw::NEG),seq(sw::K,sw::JSR,sw::POW),seq(sw::K,sw::JSR,sw::CX),seq(sw::K,sw::JSR,sw::Bx),seqNOP,
+  seq(sw::K,sw::xP,sw::_0),seq(sw::K,sw::xP,sw::_1),seq(sw::K,sw::xP,sw::_2),seq(sw::K,sw::xP,sw::_3),seq(sw::K,sw::xP,sw::_4),seq(sw::K,sw::xP,sw::_5),seq(sw::K,sw::xP,sw::_6),seq(sw::K,sw::xP,sw::_7),
+    seq(sw::K,sw::xP,sw::_8),seq(sw::K,sw::xP,sw::_9),seq(sw::K,sw::xP,sw::DOT),seq(sw::K,sw::xP,sw::NEG),seq(sw::K,sw::xP,sw::POW),seq(sw::K,sw::xP,sw::CX),seq(sw::K,sw::xP,sw::Bx),seqNOP,
+  seq(sw::K,sw::BK,sw::_0),seq(sw::K,sw::BK,sw::_1),seq(sw::K,sw::BK,sw::_2),seq(sw::K,sw::BK,sw::_3),seq(sw::K,sw::BK,sw::_4),seq(sw::K,sw::BK,sw::_5),seq(sw::K,sw::BK,sw::_6),seq(sw::K,sw::BK,sw::_7),
+    seq(sw::K,sw::BK,sw::_8),seq(sw::K,sw::BK,sw::_9),seq(sw::K,sw::BK,sw::DOT),seq(sw::K,sw::BK,sw::NEG),seq(sw::K,sw::BK,sw::POW),seq(sw::K,sw::BK,sw::CX),seq(sw::K,sw::BK,sw::Bx),seqNOP,
+  seq(sw::K,sw::Px,sw::_0),seq(sw::K,sw::Px,sw::_1),seq(sw::K,sw::Px,sw::_2),seq(sw::K,sw::Px,sw::_3),seq(sw::K,sw::Px,sw::_4),seq(sw::K,sw::Px,sw::_5),seq(sw::K,sw::Px,sw::_6),seq(sw::K,sw::Px,sw::_7),
+    seq(sw::K,sw::Px,sw::_8),seq(sw::K,sw::Px,sw::_9),seq(sw::K,sw::Px,sw::DOT),seq(sw::K,sw::Px,sw::NEG),seq(sw::K,sw::Px,sw::POW),seq(sw::K,sw::Px,sw::CX),seq(sw::K,sw::Px,sw::Bx),seqNOP,
+  seq(sw::K,sw::FW,sw::_0),seq(sw::K,sw::FW,sw::_1),seq(sw::K,sw::FW,sw::_2),seq(sw::K,sw::FW,sw::_3),seq(sw::K,sw::FW,sw::_4),seq(sw::K,sw::FW,sw::_5),seq(sw::K,sw::FW,sw::_6),seq(sw::K,sw::FW,sw::_7),
+    seq(sw::K,sw::FW,sw::_8),seq(sw::K,sw::FW,sw::_9),seq(sw::K,sw::FW,sw::DOT),seq(sw::K,sw::FW,sw::NEG),seq(sw::K,sw::FW,sw::POW),seq(sw::K,sw::FW,sw::CX),seq(sw::K,sw::FW,sw::Bx),seqNOP
 };
 
 const   u8                  CR = 0x0D;
@@ -68,32 +94,41 @@ jme[0],jme[1],jme[2],jme[3],jme[4],jme[5],jme[6],jme[7],jme[8],jme[9],jme[A],jme
 ld[0],ld[1],ld[2],ld[3],ld[4],ld[5],ld[6],ld[7],ld[8],ld[9],ld[A],ld[B],ld[C],ld[D],ld[E],?,\
 jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jnz[B],jnz[C],jnz[D],jnz[E],";
 
-    int   AT;
-    static const u32 T_VERSION        = 0x00726576; // ver
-    static const u32 T_LIST           = 0x7473696C; // list
-    static const u32 T_ISA_61         = 0x00617369; // isa
-    static const u32 T_ASSEMBLED      = 0x206D7361; // asm_
-    static const u32 T_RESET          = 0x00747372; // rst
-    static const u32 T_REG_DUMP       = 0x00676572; // reg
-    static const u32 T_REG_SET        = 0x203D3052; // R0=
-    static const u32 T_SAVE           = 0x65766173; // save
-    static const u32 T_LOAD           = 0x64616F6C; // load
-    static const u32 T_1302           = 0x32303331; // 1302
-    static const u32 T_EXECUTE        = 0x63657865; // exec
-    static const u32 T_DISASM         = 0x61736964; // disa
-    static const u32 T_HEX_INPUT      = 0x206E6968; // hin_
-    static const u32 T_HEX_OUTPUT     = 0x74756F68; // hout
-    static const u32 T_SET_CODE       = 0x24746573; // set$
-    static const u32 T_POKE_CODE      = 0x656B6F70; // poke
-    static const u32 T_DFU_FLASH      = 0x00756664; // dfu
-    static const u32 T_DUMP           = 0x706D7564; // dump
-    static const u32 T_LASM           = 0x6D73616C; // lasm
-    static const u32 T_PUB_LIST       = 0x00627570; // pub
-    static const u32 T_MAP_FLASH      = 0x70616D73; // smap
-    static const u32 T_STACK_OUTPUT   = 0x006B7473; // stk
-    static const u32 T_KBD_EMULATED   = 0x2064626B; // kbd_
-    static constexpr u32 T_CLEAR_PRG61= 0x00726C63; // clr
-    static constexpr u32 T_RING_DUMP  = 0x676E6972; // ring
+    isize   AT;
+    u32     terminal_last_cmd;
+    isize   nSlot;
+
+    static constexpr u32 T_VERSION      = 0x00726576; // ver
+    static constexpr u32 T_LIST         = 0x7473696C; // list
+    static constexpr u32 T_ISA_61       = 0x00617369; // isa
+    static constexpr u32 T_ASSEMBLED    = 0x206D7361; // asm_
+    static constexpr u32 T_RESET        = 0x00747372; // rst
+    static constexpr u32 T_REG_DUMP     = 0x00676572; // reg
+    static constexpr u32 T_REG_SET      = 0x203D3052; // R0=
+    static constexpr u32 T_SAVE         = 0x65766173; // save
+    static constexpr u32 T_LOAD         = 0x64616F6C; // load
+    static constexpr u32 T_1302         = 0x32303331; // 1302
+    static constexpr u32 T_EXECUTE      = 0x63657865; // exec
+    static constexpr u32 T_DISASM       = 0x61736964; // disa
+    static constexpr u32 T_HEX_INPUT    = 0x206E6968; // hin_
+    static constexpr u32 T_HEX_OUTPUT   = 0x74756F68; // hout
+    static constexpr u32 T_SET_CODE     = 0x24746573; // set$
+    static constexpr u32 T_POKE_CODE    = 0x656B6F70; // poke
+    static constexpr u32 T_DFU_FLASH    = 0x00756664; // dfu
+    static constexpr u32 T_DUMP         = 0x706D7564; // dump
+    static constexpr u32 T_LASM         = 0x6D73616C; // lasm
+    static constexpr u32 T_PUB_LIST     = 0x00627570; // pub
+    static constexpr u32 T_MAP_FLASH    = 0x70616D73; // smap
+    static constexpr u32 T_STACK_OUTPUT = 0x006B7473; // stk
+    static constexpr u32 T_KBD_EMULATED = 0x2064626B; // kbd_
+    static constexpr u32 T_CMD_EMULATED = 0x20646D63; // cmd_
+    static constexpr u32 T_CLEAR_PRG61  = 0x00726C63; // clr
+    static constexpr u32 T_RING_DUMP    = 0x676E6972; // ring
+    static constexpr u32 T_RENAME       = 0x206D6E73; // snm_ (rename slot name[16])
+    static constexpr u32 T_DIR          = 0x72696473; // sdir
+    static constexpr u32 T_DEL_SLOT     = 0x6C656473; // sdel
+    static constexpr u32 T_RUN          = 0x006E7572; // run (F АВТ, В/О, С/П)
+    static constexpr u32 T_ERASE_STORAGE= 0x61726573; // sera
 
     bool  not_EOF(void) {
       return recive_pos < MAX_INPUT_CHAR;
@@ -253,8 +288,10 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
     usize recive_pos;
 
     void  init(void) {
-      AT = 0;
-      recive_pos = 0;
+      AT                    = 0;
+      recive_pos            = 0;
+      terminal_last_cmd     = 0;
+      nSlot                 = -1;
       Serial.begin(115200);
       delay(1800);
       output_version();
@@ -329,12 +366,11 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
 
       MK61Emu_GetCodePage(&code_page[0]);
       isize lastCommand = seek_program_END(&code_page[0]);
-      Serial.print(lastCommand);
       isize j = 0;     
       for (isize i=0; i<30; i++) {
         for (isize ii=0; ii<4; ii++) {
           j = ii*30 + i;
-          if (j < lastCommand) {
+          if (lastCommand > j) {
             Serial.print("00");
             print_address_as_MK61(j);
             const u8 code = code_page[j];
@@ -355,9 +391,9 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
             }            
             if ( len_code_command(code) == 2 ) {
               Serial_write_hex(code2); 
-              Serial.print(" ");
+              Serial.print("  ");
             } else {
-              Serial.print("   ");
+              Serial.print("    ");
             }
             Serial.print("  ");
           }
@@ -484,11 +520,55 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       Serial.println();
     }
 
-    i32  command_to_kbd(void) { // simulate mk61 instruction from keyboard buffer
-      const usize key_code = (input_buffer[4] - '0')*10 + (input_buffer[5] - '0');
-      Serial_write_hex(key_code); Serial.println("H -> mk61");
+    isize parse_dec_numeric(char *buff) {
+      usize dec = 0;
+      while(*buff != 0 && *buff != ' ' && *buff != CR) {
+        const isize digit = DecimalDigit(*buff++);
+        if(digit < 0) {
+          Serial.print((char) buff[-1]); Serial.println(" - non decimal digit!");
+          return -1;
+        }
+        dec = dec*10 + digit;
+      }
+      return dec;
+    }
+
+    isize parse_hex_numeric(char* buff) {
+      usize hex = 0;
+
+      while(*buff != 0 && *buff != ' ' && *buff != CR) {
+        const isize digit = HexdecimalDigit(*buff++);
+        if(digit < 0) {
+          Serial.print((char) buff[-1]); Serial.println(" - non hexdecimal digit!");
+          return -1;
+        }
+        hex = hex*16 + digit;
+      }
+
+      return hex;
+    }
+
+    i32  command_to_kbd(void) {
+      const usize code_61 = parse_hex_numeric((char*) &input_buffer[4]);
+      usize sequence = key_sequence_on_cmd[code_61];
+      dbgln(MK61E, "mk61 <- ", (u8) code_61);
+      dbghexln(MK61E, "mk61 <- $", (i32) sequence);
+
+      for(isize i=0; i<4; i++) {
+        const i8 scan_code = sequence & 0xFF;
+        if(scan_code < 0) break;
+
+        keyboard.cir_buff.write(scan_code);
+        sequence >>= 8;
+      }
+      return -1;//key_sequence_on_cmd[code_61];
+    }
+
+    i32  scancode_to_kbd(void) { // simulate mk61 scancode from keyboard buffer
+      const usize key_code = parse_hex_numeric((char*) &input_buffer[4]);//high * 16 + low;//(input_buffer[4] - '0')*10 + (input_buffer[5] - '0');
+      dbghexln(MK61E, "mk61 <- ", key_code, "H");
       if(key_code > 40) {
-        Serial.println("Unsuccessful scan code! < 40");
+        Serial.println("Unsuccessful scan code! < 28H");
         return -1;
       }
       return key_code;
@@ -560,23 +640,19 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       switch(R_name) {
         case 'x':
         case 'X':
-            //MK61Emu_SetStackStr(StackRegister::REG_X, sign, buffer, pow);
             write_stack_register(stack::X, sign, buffer, pow);
           break;
         case 'y':
         case 'Y':
             write_stack_register(stack::Y, sign, buffer, pow);
-            //MK61Emu_SetStackStr(StackRegister::REG_Y, sign, buffer, pow);
           break;
         case 'z':
         case 'Z':
             write_stack_register(stack::Z, sign, buffer, pow);
-            //MK61Emu_SetStackStr(StackRegister::REG_Z, sign, buffer, pow);
           break;
         case 't':
         case 'T':
             write_stack_register(stack::T, sign, buffer, pow);
-            //MK61Emu_SetStackStr(StackRegister::REG_T, sign, buffer, pow);
           break;
         default:
           ErrorReaction();
@@ -585,13 +661,33 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
     }
 
     isize execute(void) {
+        if(input_buffer[0] == 'y' || input_buffer[0] == 'Y') {
+          switch(terminal_last_cmd) {
+            case  T_CLEAR_PRG61:
+                MK61Emu_ClearCodePage();
+                Serial.println("Code page cleared!");
+              break;
+            case  T_DEL_SLOT:
+                if(!erase_slot(nSlot)) Serial.println("Error: address out of range!");
+              break;
+            case  T_SAVE:
+                if(!Store(nSlot)) Serial.println("Failed save attempt!");
+              break;
+            case  T_ERASE_STORAGE:
+                clear_storage();
+              break;
+          }
+        }
+
         input_buffer[--recive_pos] = 0;
-        Serial.println(); Serial.print(recive_pos); Serial.write(' '); Serial.println((char*) input_buffer);
+        Serial.println();
+        dbgln(MINI,"[", recive_pos, "] '", (char*) input_buffer);
 
         const int nReg = (input_buffer[1] - '0');
         const u32 token0 = *(u32*) (&input_buffer[0]);
         const u32 token = (input_buffer[2] == '=')? token0 & 0xFFFF00FF : token0;
-        Serial.println(token, HEX);
+        terminal_last_cmd = token;
+        dbghexln(MINI, token);
         switch (token) {
           case  T_VERSION:
               output_version();
@@ -618,26 +714,29 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
               Dump1302();
             break;
           case  T_CLEAR_PRG61:
-              MK61Emu_ClearCodePage();
-              Serial.println("Code page cleared!");
+          case  T_ERASE_STORAGE:
+              Serial.println("Enter Y/y to confirm the operation!");
             break;
+          case  T_CMD_EMULATED: 
+              recive_pos = 0;
+            return command_to_kbd();
           case  T_KBD_EMULATED: {
               recive_pos = 0;
-              const i32 scancode = command_to_kbd();
+              const i32 scancode = scancode_to_kbd();
               if(scancode < 0) break;
-            return scancode;
-          }
-          /*case  T_EXECUTE:
-              recive_pos = 0;
-            return 25;*/
+              return scancode;
+            }
           case  T_DISASM:  // включить/выключить режим верхней строки с дизассемблером МК61
               config.disassm = disassembler.turn_on_off();
             break;
-          case  T_SAVE:
-              Store();
+          case  T_SAVE: 
+              nSlot = parse_dec_numeric((char*) &input_buffer[5]);
+              Serial.println("Enter Y/y to confirm the operation!");
             break;
-          case  T_LOAD:
-              Load();
+          case  T_LOAD: {
+              const isize nSlot = parse_dec_numeric((char*) &input_buffer[5]);
+              if(!Load(nSlot)) Serial.println("Failed load attempt!");
+            }
             break;
           case  T_PUB_LIST:
               pub_mk61_code_page();
@@ -679,8 +778,70 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
           case  T_MAP_FLASH:
               flash_map_list();
             break;
+          case  T_RUN: 
+              keyboard.cir_buff.write(38); // F
+              keyboard.cir_buff.write(10); // /-/
+              keyboard.cir_buff.write(31); // В/О
+              keyboard.cir_buff.write(30); // C/П
+            break;
           case  T_POKE_CODE:
               input_R_stack();
+            break;
+          case  T_DIR: {
+              char slot_name[17];
+              for(usize i=0; i < 100; i++) {
+                if(IsOcupped(i)) {
+                  Serial.print(i); Serial.print(". "); Serial.println(ReadSlotName(i, (char*) &slot_name[0]));
+                }
+              }
+            }
+            break;
+          case  T_DEL_SLOT: {
+              if(!flash_is_ok) {
+                Serial.println("Error: spiflash chip is not installed!");
+                break;
+              }
+              nSlot = parse_dec_numeric((char*) &input_buffer[5]);
+              Serial.print("\n\rClear slot #"); Serial.println(nSlot);
+              if(nSlot < 0 || nSlot > 99) {
+                 Serial.println("Error: is out of range 0..99 !");
+                break;
+              }
+              if(!IsOcupped(nSlot)) {
+                Serial.println("Warning: slot is already empty.");
+                break;
+              }
+              Serial.println("Enter Y/y to confirm the operation!");
+            }
+            break;
+          case  T_RENAME: {
+              usize nSlot = 0;
+              usize pos = 4;
+              while(pos < 6) {
+                const char symbol = input_buffer[pos];
+                if(symbol == ' ') break;
+
+                const usize dec_digit = symbol - '0';
+                if(dec_digit >= 10) {
+                  Serial.print("Invalid digit in slot number => '"); Serial.print(dec_digit); Serial.println("'"); 
+                  ErrorReaction();
+                  break;
+                }
+                nSlot = nSlot*10 + dec_digit;
+                pos++;
+              }
+              if(input_buffer[pos++] != ' ') {
+                Serial.println("Slot number > 99"); 
+                ErrorReaction();
+                break;
+              }
+              
+              Serial.print("Rename slot N"); Serial.print(nSlot); Serial.print(" to "); Serial.println((char*) &input_buffer[pos]);
+              if(!Rename(nSlot,(char*) &input_buffer[pos])) {
+                  Serial.println("Check slot number (<100) or name of slot (16 char)!");
+                  ErrorReaction();
+              }
+            }
             break;
           case  T_HEX_INPUT:
           case  T_SET_CODE:

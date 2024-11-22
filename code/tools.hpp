@@ -11,7 +11,10 @@ static constexpr usize FLASH_SECTOR_SIZE    = 4096;
 static constexpr u8    SLOT_OCCUPIED        = 0x55;
 static constexpr usize OFFSET_FLAG_OCCUPIED = 0;
 static constexpr usize OFFSET_MK61_PROGRAMM = 1;
+static constexpr usize OFFSET_SLOT_NAME     = 384;
+static constexpr usize SIZEOF_SLOT_NAME     = 16;
 static constexpr isize MAX_SLOT_FOR_PROGRAM = 99;
+static constexpr isize BLOCK_SIZE           = 106 / 13;
 
 static const int switch_R_GRD_G = 106;
 static const int count_switch_R_GRD_G = 107;
@@ -20,14 +23,25 @@ extern bool flash_is_ok;
 extern void DFU_enable(void);
 extern void message_and_waitkey(const char* lcd_message);
 extern bool Сonfirmation(void);
+extern isize calc_address(usize nSlot);
+extern char* ReadSlotName(usize nSlot, char* slot_name);
+extern bool Rename(usize nSlot, char* slot_name);
 extern bool Store(void);
+extern bool Store(usize nSlot);
 extern bool Load(void);
+extern bool Load(usize nSlot);
 extern u8   load_word(isize segment_address, isize offset);
 extern bool EraseFlash(void);
+extern bool clear_storage(void);
+extern bool erase_slot(usize nSlot);
 extern void init_external_flash(void);
 extern void sound(usize pin, isize freq_Hz, usize duration_ms);
 
 extern usize seek_program_END(u8* code_page);
+
+inline bool IsOcupped(usize nSlot) {
+   return (load_word(nSlot * FLASH_SECTOR_SIZE, OFFSET_FLAG_OCCUPIED) == SLOT_OCCUPIED);
+}
 
 inline void ErrorReaction(void) {
   sound(PIN_BUZZER, 4000, 750);
@@ -35,6 +49,11 @@ inline void ErrorReaction(void) {
 
 inline bool IsDecimalDigit(char symbol) {
   return ((symbol >= '0') && (symbol <= '9'));
+}
+
+inline isize DecimalDigit(char Symbol) {
+  Symbol -= '0';
+  return (Symbol <= 9)? Symbol : -1;
 }
 
 inline isize HexdecimalDigit(char Symbol) {
