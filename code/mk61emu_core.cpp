@@ -42,98 +42,43 @@ const bool sergey_anvarov_hack_enable = true;
 
 MK61Emu m_emu;
 
-const char default_symbols[16] = {
+static const char default_symbols[16] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'L', 'C', 'r', 'E', ' '
 };
 
-const uint8_t div3_table[256] = {
-  0 / 3,  1 / 3,  2 / 3,  3 / 3,  4 / 3,  5 / 3,  6 / 3,  7 / 3,  8 / 3,  9 / 3,
- 10 / 3, 11 / 3, 12 / 3, 13 / 3, 14 / 3, 15 / 3, 16 / 3, 17 / 3, 18 / 3, 19 / 3,
- 20 / 3, 21 / 3, 22 / 3, 23 / 3, 24 / 3, 25 / 3, 26 / 3, 27 / 3, 28 / 3, 29 / 3,
- 30 / 3, 31 / 3, 32 / 3, 33 / 3, 34 / 3, 35 / 3, 36 / 3, 37 / 3, 38 / 3, 39 / 3,
- 40 / 3, 41 / 3, 42 / 3, 43 / 3, 44 / 3, 45 / 3, 46 / 3, 47 / 3, 48 / 3, 49 / 3,
- 50 / 3, 51 / 3, 52 / 3, 53 / 3, 54 / 3, 55 / 3, 56 / 3, 57 / 3, 58 / 3, 59 / 3,
- 60 / 3, 61 / 3, 62 / 3, 63 / 3, 64 / 3, 65 / 3, 66 / 3, 67 / 3, 68 / 3, 69 / 3,
- 70 / 3, 71 / 3, 72 / 3, 73 / 3, 74 / 3, 75 / 3, 76 / 3, 77 / 3, 78 / 3, 79 / 3,
- 80 / 3, 81 / 3, 82 / 3, 83 / 3, 84 / 3, 85 / 3, 86 / 3, 87 / 3, 88 / 3, 89 / 3,
- 90 / 3, 91 / 3, 92 / 3, 93 / 3, 94 / 3, 95 / 3, 96 / 3, 97 / 3, 98 / 3, 99 / 3,
- 100 / 3, 101 / 3, 102 / 3, 103 / 3, 104 / 3, 105 / 3, 106 / 3, 107 / 3, 108 / 3, 109 / 3,
- 110 / 3, 111 / 3, 112 / 3, 113 / 3, 114 / 3, 115 / 3, 116 / 3, 117 / 3, 118 / 3, 119 / 3,
- 120 / 3, 121 / 3, 122 / 3, 123 / 3, 124 / 3, 125 / 3, 126 / 3, 127 / 3, 128 / 3, 129 / 3,
- 130 / 3, 131 / 3, 132 / 3, 133 / 3, 134 / 3, 135 / 3, 136 / 3, 137 / 3, 138 / 3, 139 / 3,
- 140 / 3, 141 / 3, 142 / 3, 143 / 3, 144 / 3, 145 / 3, 146 / 3, 147 / 3, 148 / 3, 149 / 3,
- 150 / 3, 151 / 3, 152 / 3, 153 / 3, 154 / 3, 155 / 3, 156 / 3, 157 / 3, 158 / 3, 159 / 3,
- 160 / 3, 161 / 3, 162 / 3, 163 / 3, 164 / 3, 165 / 3, 166 / 3, 167 / 3, 168 / 3, 169 / 3,
- 170 / 3, 171 / 3, 172 / 3, 173 / 3, 174 / 3, 175 / 3, 176 / 3, 177 / 3, 178 / 3, 179 / 3,
- 180 / 3, 181 / 3, 182 / 3, 183 / 3, 184 / 3, 185 / 3, 186 / 3, 187 / 3, 188 / 3, 189 / 3,
- 190 / 3, 191 / 3, 192 / 3, 193 / 3, 194 / 3, 195 / 3, 196 / 3, 197 / 3, 198 / 3, 199 / 3,
- 200 / 3, 201 / 3, 202 / 3, 203 / 3, 204 / 3, 205 / 3, 206 / 3, 207 / 3, 208 / 3, 209 / 3,
- 210 / 3, 211 / 3, 212 / 3, 213 / 3, 214 / 3, 215 / 3, 216 / 3, 217 / 3, 218 / 3, 219 / 3,
- 220 / 3, 221 / 3, 222 / 3, 223 / 3, 224 / 3, 225 / 3, 226 / 3, 227 / 3, 228 / 3, 229 / 3,
- 230 / 3, 231 / 3, 232 / 3, 233 / 3, 234 / 3, 235 / 3, 236 / 3, 237 / 3, 238 / 3, 239 / 3,
- 240 / 3, 241 / 3, 242 / 3, 243 / 3, 244 / 3, 245 / 3, 246 / 3, 247 / 3, 248 / 3, 249 / 3,
- 250 / 3, 251 / 3, 252 / 3, 253 / 3, 254 / 3, 255 / 3
-};
+#include <array>
+constexpr static std::array<uint8_t, 256> div3_table = []() {
+  std::array<uint8_t, 256> _{};
+  for (auto i=0; i<256; i++) _[i]=i/3;
+  return _;
+}();
 
-#if mcpu != cortex-m4
-const uint16_t mul9_table[256] = {
-  0 * 9,  1 * 9,  2 * 9,  3 * 9,  4 * 9,  5 * 9,  6 * 9,  7 * 9,  8 * 9,  9 * 9,
- 10 * 9, 11 * 9, 12 * 9, 13 * 9, 14 * 9, 15 * 9, 16 * 9, 17 * 9, 18 * 9, 19 * 9,
- 20 * 9, 21 * 9, 22 * 9, 23 * 9, 24 * 9, 25 * 9, 26 * 9, 27 * 9, 28 * 9, 29 * 9,
- 30 * 9, 31 * 9, 32 * 9, 33 * 9, 34 * 9, 35 * 9, 36 * 9, 37 * 9, 38 * 9, 39 * 9,
- 40 * 9, 41 * 9, 42 * 9, 43 * 9, 44 * 9, 45 * 9, 46 * 9, 47 * 9, 48 * 9, 49 * 9,
- 50 * 9, 51 * 9, 52 * 9, 53 * 9, 54 * 9, 55 * 9, 56 * 9, 57 * 9, 58 * 9, 59 * 9,
- 60 * 9, 61 * 9, 62 * 9, 63 * 9, 64 * 9, 65 * 9, 66 * 9, 67 * 9, 68 * 9, 69 * 9,
- 70 * 9, 71 * 9, 72 * 9, 73 * 9, 74 * 9, 75 * 9, 76 * 9, 77 * 9, 78 * 9, 79 * 9,
- 80 * 9, 81 * 9, 82 * 9, 83 * 9, 84 * 9, 85 * 9, 86 * 9, 87 * 9, 88 * 9, 89 * 9,
- 90 * 9, 91 * 9, 92 * 9, 93 * 9, 94 * 9, 95 * 9, 96 * 9, 97 * 9, 98 * 9, 99 * 9,
- 100 * 9, 101 * 9, 102 * 9, 103 * 9, 104 * 9, 105 * 9, 106 * 9, 107 * 9, 108 * 9, 109 * 9,
- 110 * 9, 111 * 9, 112 * 9, 113 * 9, 114 * 9, 115 * 9, 116 * 9, 117 * 9, 118 * 9, 119 * 9,
- 120 * 9, 121 * 9, 122 * 9, 123 * 9, 124 * 9, 125 * 9, 126 * 9, 127 * 9, 128 * 9, 129 * 9,
- 130 * 9, 131 * 9, 132 * 9, 133 * 9, 134 * 9, 135 * 9, 136 * 9, 137 * 9, 138 * 9, 139 * 9,
- 140 * 9, 141 * 9, 142 * 9, 143 * 9, 144 * 9, 145 * 9, 146 * 9, 147 * 9, 148 * 9, 149 * 9,
- 150 * 9, 151 * 9, 152 * 9, 153 * 9, 154 * 9, 155 * 9, 156 * 9, 157 * 9, 158 * 9, 159 * 9,
- 160 * 9, 161 * 9, 162 * 9, 163 * 9, 164 * 9, 165 * 9, 166 * 9, 167 * 9, 168 * 9, 169 * 9,
- 170 * 9, 171 * 9, 172 * 9, 173 * 9, 174 * 9, 175 * 9, 176 * 9, 177 * 9, 178 * 9, 179 * 9,
- 180 * 9, 181 * 9, 182 * 9, 183 * 9, 184 * 9, 185 * 9, 186 * 9, 187 * 9, 188 * 9, 189 * 9,
- 190 * 9, 191 * 9, 192 * 9, 193 * 9, 194 * 9, 195 * 9, 196 * 9, 197 * 9, 198 * 9, 199 * 9,
- 200 * 9, 201 * 9, 202 * 9, 203 * 9, 204 * 9, 205 * 9, 206 * 9, 207 * 9, 208 * 9, 209 * 9,
- 210 * 9, 211 * 9, 212 * 9, 213 * 9, 214 * 9, 215 * 9, 216 * 9, 217 * 9, 218 * 9, 219 * 9,
- 220 * 9, 221 * 9, 222 * 9, 223 * 9, 224 * 9, 225 * 9, 226 * 9, 227 * 9, 228 * 9, 229 * 9,
- 230 * 9, 231 * 9, 232 * 9, 233 * 9, 234 * 9, 235 * 9, 236 * 9, 237 * 9, 238 * 9, 239 * 9,
- 240 * 9, 241 * 9, 242 * 9, 243 * 9, 244 * 9, 245 * 9, 246 * 9, 247 * 9, 248 * 9, 249 * 9,
- 250 * 9, 251 * 9, 252 * 9, 253 * 9, 254 * 9, 255 * 9
-};
+constexpr static std::array<uint8_t, 256> mul9_table = []() {
+  std::array<uint8_t, 256> _{};
+  for (auto i=0; i<256; i++) _[i]=i*9;
+  return _;
+}();
+
+constexpr static std::array<uint8_t, 256> mod42_table = []() {
+  std::array<uint8_t, 256> _{};
+  for (auto i=0; i<256; i++) _[i]=i%42;
+  return _;
+}();
+
+#define DIV3(v)		(div3_table[v])
+//#define DIV3(v)		(((v)*171)>>9)
+//#define DIV3(v)		((v)/3)			//udiv M3/M4 
+
+#if __ARM_ARCH == 7
+#define MUL9(v)		((v)*9)
+#else
+#define MUL9(v)		(mul9_table[v])
+//#define MUL9(v)		((v)*9)
+//#define MUL9(v)		( ((v)+((v)<<3)) &0xff )
 #endif
 
-const uint8_t mod42_table[256] = {
-  0 % 42,  1 % 42,  2 % 42,  3 % 42,  4 % 42,  5 % 42,  6 % 42,  7 % 42,  8 % 42,  9 % 42,
- 10 % 42, 11 % 42, 12 % 42, 13 % 42, 14 % 42, 15 % 42, 16 % 42, 17 % 42, 18 % 42, 19 % 42,
- 20 % 42, 21 % 42, 22 % 42, 23 % 42, 24 % 42, 25 % 42, 26 % 42, 27 % 42, 28 % 42, 29 % 42,
- 30 % 42, 31 % 42, 32 % 42, 33 % 42, 34 % 42, 35 % 42, 36 % 42, 37 % 42, 38 % 42, 39 % 42,
- 40 % 42, 41 % 42, 42 % 42, 43 % 42, 44 % 42, 45 % 42, 46 % 42, 47 % 42, 48 % 42, 49 % 42,
- 50 % 42, 51 % 42, 52 % 42, 53 % 42, 54 % 42, 55 % 42, 56 % 42, 57 % 42, 58 % 42, 59 % 42,
- 60 % 42, 61 % 42, 62 % 42, 63 % 42, 64 % 42, 65 % 42, 66 % 42, 67 % 42, 68 % 42, 69 % 42,
- 70 % 42, 71 % 42, 72 % 42, 73 % 42, 74 % 42, 75 % 42, 76 % 42, 77 % 42, 78 % 42, 79 % 42,
- 80 % 42, 81 % 42, 82 % 42, 83 % 42, 84 % 42, 85 % 42, 86 % 42, 87 % 42, 88 % 42, 89 % 42,
- 90 % 42, 91 % 42, 92 % 42, 93 % 42, 94 % 42, 95 % 42, 96 % 42, 97 % 42, 98 % 42, 99 % 42,
- 100 % 42, 101 % 42, 102 % 42, 103 % 42, 104 % 42, 105 % 42, 106 % 42, 107 % 42, 108 % 42, 109 % 42,
- 110 % 42, 111 % 42, 112 % 42, 113 % 42, 114 % 42, 115 % 42, 116 % 42, 117 % 42, 118 % 42, 119 % 42,
- 120 % 42, 121 % 42, 122 % 42, 123 % 42, 124 % 42, 125 % 42, 126 % 42, 127 % 42, 128 % 42, 129 % 42,
- 130 % 42, 131 % 42, 132 % 42, 133 % 42, 134 % 42, 135 % 42, 136 % 42, 137 % 42, 138 % 42, 139 % 42,
- 140 % 42, 141 % 42, 142 % 42, 143 % 42, 144 % 42, 145 % 42, 146 % 42, 147 % 42, 148 % 42, 149 % 42,
- 150 % 42, 151 % 42, 152 % 42, 153 % 42, 154 % 42, 155 % 42, 156 % 42, 157 % 42, 158 % 42, 159 % 42,
- 160 % 42, 161 % 42, 162 % 42, 163 % 42, 164 % 42, 165 % 42, 166 % 42, 167 % 42, 168 % 42, 169 % 42,
- 170 % 42, 171 % 42, 172 % 42, 173 % 42, 174 % 42, 175 % 42, 176 % 42, 177 % 42, 178 % 42, 179 % 42,
- 180 % 42, 181 % 42, 182 % 42, 183 % 42, 184 % 42, 185 % 42, 186 % 42, 187 % 42, 188 % 42, 189 % 42,
- 190 % 42, 191 % 42, 192 % 42, 193 % 42, 194 % 42, 195 % 42, 196 % 42, 197 % 42, 198 % 42, 199 % 42,
- 200 % 42, 201 % 42, 202 % 42, 203 % 42, 204 % 42, 205 % 42, 206 % 42, 207 % 42, 208 % 42, 209 % 42,
- 210 % 42, 211 % 42, 212 % 42, 213 % 42, 214 % 42, 215 % 42, 216 % 42, 217 % 42, 218 % 42, 219 % 42,
- 220 % 42, 221 % 42, 222 % 42, 223 % 42, 224 % 42, 225 % 42, 226 % 42, 227 % 42, 228 % 42, 229 % 42,
- 230 % 42, 231 % 42, 232 % 42, 233 % 42, 234 % 42, 235 % 42, 236 % 42, 237 % 42, 238 % 42, 239 % 42,
- 240 % 42, 241 % 42, 242 % 42, 243 % 42, 244 % 42, 245 % 42, 246 % 42, 247 % 42, 248 % 42, 249 % 42,
- 250 % 42, 251 % 42, 252 % 42, 253 % 42, 254 % 42, 255 % 42
-};
+#define MOD42(v)	(mod42_table[v])
+//#define MOD42(v)	( ((v) %42) &0xff )
 
 const mk61ROM_t ROM = {
         IK1302: {
@@ -1195,11 +1140,7 @@ void class_mk61_core::cycle(void)
           m_IK1302.pAND_AMK  = (uint8_t*) &IK1302_AND_AMK[0x5f * 9];
       }
       else{
-        #if mcpu == cortex-m4
-          m_IK1302.pAND_AMK  = (uint8_t*) &IK1302_AND_AMK[((uint8_t) IK1302_uI_hi) * 9];
-        #else
-          m_IK1302.pAND_AMK  = (uint8_t*) &IK1302_AND_AMK[mul9_table[(uint8_t) IK1302_uI_hi]];
-        #endif
+          m_IK1302.pAND_AMK  = (uint8_t*) &IK1302_AND_AMK[MUL9((uint8_t) IK1302_uI_hi)];
       }
 
       if ((uint8_t) m_IK1303.uI_hi > 0x1f)
@@ -1209,11 +1150,7 @@ void class_mk61_core::cycle(void)
           m_IK1303.pAND_AMK  = (uint8_t*) &IK1303_AND_AMK[0x5f * 9];
       }
       else{
-        #if mcpu == cortex-m4
-           m_IK1303.pAND_AMK  = (uint8_t*) &IK1303_AND_AMK[((uint8_t) m_IK1303.uI_hi) * 9];
-        #else
-           m_IK1303.pAND_AMK  = (uint8_t*) &IK1303_AND_AMK[mul9_table[(uint8_t) m_IK1303.uI_hi]];
-        #endif
+           m_IK1303.pAND_AMK  = (uint8_t*) &IK1303_AND_AMK[MUL9((uint8_t) m_IK1303.uI_hi)];
       }
 
       if ((uint8_t) m_IK1306.uI_hi > 0x1f)
@@ -1223,11 +1160,7 @@ void class_mk61_core::cycle(void)
           m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[0x5f * 9];
       }
       else{
-        #if mcpu == cortex-m4
-          m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[((uint8_t) m_IK1306.uI_hi) * 9];
-        #else
-          m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[mul9_table[(uint8_t) m_IK1306.uI_hi]];
-        #endif
+          m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[MUL9((uint8_t) m_IK1306.uI_hi)];
       }
 
           CycleB(0);   // 36
@@ -1261,13 +1194,8 @@ void IK1302_GoZero(void)
     IK1302_uI_hi = uI >> 16;
 
 
-    #if mcpu == cortex-m4
-      m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[ ((uint8_t) uI) * 9 ];
-      m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[ (((uint16_t) uI) >> 8) * 9 ];
-    #else
-      m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[mul9_table[(uint8_t) uI]];
-      m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[mul9_table[(((uint16_t) uI) >> 8)]];
-    #endif
+    m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[MUL9((uint8_t) uI)];
+    m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[MUL9((((uint16_t) uI) >> 8))];
 
     m_IK1302.MOD = (uint8_t) (uI >> 24);
     m_IK1302.flag_FC = IK1302_uI_hi & 0x00FC;
@@ -1281,13 +1209,8 @@ void IK1303_GoZero(void)
     uint32_t uI = ROM.IK1303.instructions[(uint16_t)m_IK1303.R[36] + 16 * (uint16_t)m_IK1303.R[39]];
     m_IK1303.uI_hi = uI >> 16;
 
-    #if mcpu == cortex-m4
-      m_IK1303.pAND_AMK = (uint8_t*) &IK1303_AND_AMK[ ((uint8_t) uI) * 9 ];
-      m_IK1303.pAND_AMK1 = (uint8_t*) &IK1303_AND_AMK[ (((uint16_t) uI) >> 8) * 9 ];
-    #else
-      m_IK1303.pAND_AMK = (uint8_t*) &IK1303_AND_AMK[ mul9_table[(uint8_t) uI] ];
-      m_IK1303.pAND_AMK1 = (uint8_t*) &IK1303_AND_AMK[ mul9_table[(((uint16_t) uI) >> 8)] ];
-    #endif
+    m_IK1303.pAND_AMK = (uint8_t*) &IK1303_AND_AMK[ MUL9((uint8_t) uI) ];
+    m_IK1303.pAND_AMK1 = (uint8_t*) &IK1303_AND_AMK[ MUL9((((uint16_t) uI) >> 8)) ];
 
     m_IK1303.MOD = (uint8_t) (uI >> 24);
     m_IK1303.flag_FC = m_IK1303.uI_hi & 0x00FC;
@@ -1333,7 +1256,7 @@ void IK1302_Tick(mtick_t signal_I, uint16_t J_signal_I)
     mi_hi = (microinstruction >> 16);
 //---------------------------------------------------------
     if((((microinstruction >> 24) & 0x03) == 0x2) || (((microinstruction >> 24) & 0x03) == 0x3)) {
-        if (div3_table[signal_I] != m_IK1302.key_xm)
+        if (DIV3(signal_I) != m_IK1302.key_xm)
            m_IK1302.S1 |= m_IK1302.key_y;
     }
 //---------------------------------------------------------
@@ -1371,7 +1294,7 @@ void IK1302_Tick(mtick_t signal_I, uint16_t J_signal_I)
                 if (m_IK1302.key_y == 0) m_IK1302.T = 0;
         } else {
                 m_IK1302.displayed = 1;
-                val = div3_table[signal_I];
+                val = DIV3(signal_I);
                 if((val == m_IK1302.key_xm) && (m_IK1302.key_y != 0)){
                                 m_IK1302.S1 = m_IK1302.key_y;
                                 m_IK1302.T = 1;
@@ -1392,7 +1315,7 @@ void IK1302_Tick(mtick_t signal_I, uint16_t J_signal_I)
                 if (m_IK1302.key_y == 0) m_IK1302.T = 0;
         } else {
                 m_IK1302.displayed = 1;
-                val = div3_table[signal_I];
+                val = DIV3(signal_I);
                 if((val == m_IK1302.key_xm) && (m_IK1302.key_y != 0)){
                                 m_IK1302.S1 = m_IK1302.key_y;
                                 m_IK1302.T = 1;
@@ -1412,8 +1335,8 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
         if(tmp != 0){
           switch (tmp) {
             case 1: 
-                dbgln(CORE61, "R[", signal_I, "] = R[", mod42_table[signal_I + 3]);
-                m_IK1302.R[signal_I] = m_IK1302.R[mod42_table[signal_I + 3]]; 
+                dbgln(CORE61, "R[", signal_I, "] = R[", MOD42(signal_I + 3));
+                m_IK1302.R[signal_I] = m_IK1302.R[MOD42(signal_I + 3)]; 
               break;
             case 2: m_IK1302.R[signal_I] = sigma; break;
             case 3: m_IK1302.R[signal_I] = m_IK1302.S; break;
@@ -1424,8 +1347,8 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
           }
         }
 
-        if ((mi_hi & 0x0004) !=0)    m_IK1302.R[mod42_table[signal_I + 41]] = sigma;
-        if ((mi_hi & 0x0008) !=0)    m_IK1302.R[mod42_table[signal_I + 40]] = sigma;
+        if ((mi_hi & 0x0004) !=0)    m_IK1302.R[MOD42(signal_I + 41)] = sigma;
+        if ((mi_hi & 0x0008) !=0)    m_IK1302.R[MOD42(signal_I + 40)] = sigma;
     }
     if ((mi_hi & 0x0020) !=0)        m_IK1302.L = m_IK1302.P & 1;
     if ((mi_hi & 0x0010) !=0)        m_IK1302.pM[signal_I] = m_IK1302.S;
@@ -1449,14 +1372,14 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
     mi_hi = mi_hi & 0x0C00;
     if(mi_hi != 0){
           if(mi_hi == 0x0400) {
-                    m_IK1302.ST[mod42_table[signal_I + 2]] = m_IK1302.ST[mod42_table[signal_I + 1]];
-                    m_IK1302.ST[mod42_table[signal_I + 1]] = m_IK1302.ST[signal_I];
+                    m_IK1302.ST[MOD42(signal_I + 2)] = m_IK1302.ST[MOD42(signal_I + 1)];
+                    m_IK1302.ST[MOD42(signal_I + 1)] = m_IK1302.ST[signal_I];
                     m_IK1302.ST[signal_I] = sigma;
           } else if(mi_hi == 0x0800) {
                     tmp = m_IK1302.ST[signal_I];
-                    m_IK1302.ST[signal_I] = m_IK1302.ST[mod42_table[signal_I + 1]];
-                    m_IK1302.ST[mod42_table[signal_I + 1]] = m_IK1302.ST[mod42_table[signal_I + 2]];
-                    m_IK1302.ST[mod42_table[signal_I + 2]] = tmp;
+                    m_IK1302.ST[signal_I] = m_IK1302.ST[MOD42(signal_I + 1)];
+                    m_IK1302.ST[MOD42(signal_I + 1)] = m_IK1302.ST[MOD42(signal_I + 2)];
+                    m_IK1302.ST[MOD42(signal_I + 2)] = tmp;
           }
     }
 }
@@ -1497,7 +1420,7 @@ void IK1303_Tick(mtick_t signal_I, uint16_t J_signal_I)
  mi_hi = (microinstruction >> 16);
 //---------------------------------------------------------
  if((((microinstruction >> 24) & 0x03) == 0x2) || (((microinstruction >> 24) & 0x03) == 0x3)) {
-     if (div3_table[signal_I] != m_IK1303.key_xm) {
+     if (DIV3(signal_I) != m_IK1303.key_xm) {
          // TODO remove if (m_IK1303.key_y > 0)
          m_IK1303.S1 |= m_IK1303.key_y;
      }
@@ -1538,7 +1461,7 @@ void IK1303_Tick(mtick_t signal_I, uint16_t J_signal_I)
                 if (m_IK1303.key_y == 0) m_IK1303.T = 0;
         }
         else{
-                tmp = div3_table[signal_I];
+                tmp = DIV3(signal_I);
                 if (tmp == m_IK1303.key_xm)
                         if (m_IK1303.key_y > 0) {
                                 m_IK1303.S1 = m_IK1303.key_y;
@@ -1561,7 +1484,7 @@ void IK1303_Tick(mtick_t signal_I, uint16_t J_signal_I)
                 if (m_IK1303.key_y == 0) m_IK1303.T = 0;
         }
         else{
-                tmp = div3_table[signal_I];
+                tmp = DIV3(signal_I);
                 if (tmp == m_IK1303.key_xm)
                         if (m_IK1303.key_y > 0) {
                                 m_IK1303.S1 = m_IK1303.key_y;
@@ -1583,7 +1506,7 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
                 if(tmp != 0){
           switch (tmp)
           {
-            case 1: m_IK1303.R[signal_I] = m_IK1303.R[mod42_table[signal_I + 3]]; break;
+            case 1: m_IK1303.R[signal_I] = m_IK1303.R[MOD42(signal_I + 3)]; break;
             case 2: m_IK1303.R[signal_I] = sigma; break;
             case 3: m_IK1303.R[signal_I] = m_IK1303.S; break;
             case 4: m_IK1303.R[signal_I] = m_IK1303.R[signal_I] | m_IK1303.S | sigma; break;
@@ -1593,8 +1516,8 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
           }
                 }
 
-        if ((mi_hi & 0x0004) !=0)    m_IK1303.R[mod42_table[signal_I + 41]] = sigma;
-        if ((mi_hi & 0x0008) !=0)    m_IK1303.R[mod42_table[signal_I + 40]] = sigma;
+        if ((mi_hi & 0x0004) !=0)    m_IK1303.R[MOD42(signal_I + 41)] = sigma;
+        if ((mi_hi & 0x0008) !=0)    m_IK1303.R[MOD42(signal_I + 40)] = sigma;
     }
     if ((mi_hi & 0x0020) !=0)        m_IK1303.L = m_IK1303.P & 1;
     if ((mi_hi & 0x0010) !=0)        m_IK1303.pM[signal_I] = m_IK1303.S;
@@ -1619,15 +1542,15 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
     mi_hi = mi_hi & 0x0C00;
     if(mi_hi != 0){
           if(mi_hi == 0x0400){
-                    m_IK1303.ST[mod42_table[signal_I + 2]] = m_IK1303.ST[mod42_table[signal_I + 1]];
-                    m_IK1303.ST[mod42_table[signal_I + 1]] = m_IK1303.ST[signal_I];
+                    m_IK1303.ST[MOD42(signal_I + 2)] = m_IK1303.ST[MOD42(signal_I + 1)];
+                    m_IK1303.ST[MOD42(signal_I + 1)] = m_IK1303.ST[signal_I];
                     m_IK1303.ST[signal_I] = sigma;
           }
           else if(mi_hi == 0x0800){
                     tmp = m_IK1303.ST[signal_I];
-                    m_IK1303.ST[signal_I] = m_IK1303.ST[mod42_table[signal_I + 1]];
-                    m_IK1303.ST[mod42_table[signal_I + 1]] = m_IK1303.ST[mod42_table[signal_I + 2]];
-                    m_IK1303.ST[mod42_table[signal_I + 2]] = tmp;
+                    m_IK1303.ST[signal_I] = m_IK1303.ST[MOD42(signal_I + 1)];
+                    m_IK1303.ST[MOD42(signal_I + 1)] = m_IK1303.ST[MOD42(signal_I + 2)];
+                    m_IK1303.ST[MOD42(signal_I + 2)] = tmp;
           }
     }
 }
@@ -1637,13 +1560,8 @@ void IK1306_GoZero(void)
     uint32_t uI = ROM.IK1306.instructions[m_IK1306.R[36] + 16 * m_IK1306.R[39]];
     m_IK1306.uI_hi = uI >> 16;
 
-    #if mcpu == cortex-m4
-      m_IK1306.pAND_AMK = (uint8_t*) &IK1306_AND_AMK[ ((uint8_t) uI) * 9 ];
-      m_IK1306.pAND_AMK1 = (uint8_t*) &IK1306_AND_AMK[ (((uint16_t) uI) >> 8) * 9 ];
-    #else
-      m_IK1306.pAND_AMK = (uint8_t*) &IK1306_AND_AMK[mul9_table[(uint8_t) uI]];
-      m_IK1306.pAND_AMK1 = (uint8_t*) &IK1306_AND_AMK[mul9_table[(((uint16_t) uI) >> 8)]];
-    #endif
+    m_IK1306.pAND_AMK = (uint8_t*) &IK1306_AND_AMK[MUL9((uint8_t) uI)];
+    m_IK1306.pAND_AMK1 = (uint8_t*) &IK1306_AND_AMK[MUL9((((uint16_t) uI) >> 8))];
 
     m_IK1306.MOD = (uint8_t) (uI >> 24);
 }
@@ -1729,7 +1647,7 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
         tmp = IK1306_DCW[m_IK1306.AMK];
         if(tmp != 0){
           switch (tmp){
-            case 1: m_IK1306.R[signal_I] = m_IK1306.R[mod42_table[signal_I + 3]]; break;
+            case 1: m_IK1306.R[signal_I] = m_IK1306.R[MOD42(signal_I + 3)]; break;
             case 2: m_IK1306.R[signal_I] = sigma; break;
             case 3: m_IK1306.R[signal_I] = m_IK1306.S; break;
             case 4: m_IK1306.R[signal_I] = m_IK1306.R[signal_I] | m_IK1306.S | sigma; break;
@@ -1739,8 +1657,8 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
           }
         }
 
-        if ((mi_hi & 0x0004) !=0)    m_IK1306.R[mod42_table[signal_I + 41]] = sigma;
-        if ((mi_hi & 0x0008) !=0)    m_IK1306.R[mod42_table[signal_I + 40]] = sigma;
+        if ((mi_hi & 0x0004) !=0)    m_IK1306.R[MOD42(signal_I + 41)] = sigma;
+        if ((mi_hi & 0x0008) !=0)    m_IK1306.R[MOD42(signal_I + 40)] = sigma;
     }
     if ((mi_hi & 0x0020) !=0)        m_IK1306.L = m_IK1306.P & 1;
     if ((mi_hi & 0x0010) !=0)        m_IK1306.pM[signal_I] = m_IK1306.S;
@@ -1765,15 +1683,15 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
     mi_hi = mi_hi & 0x0C00;
     if(mi_hi != 0){
           if(mi_hi == 0x0400){
-                    m_IK1306.ST[mod42_table[signal_I + 2]] = m_IK1306.ST[mod42_table[signal_I + 1]];
-                    m_IK1306.ST[mod42_table[signal_I + 1]] = m_IK1306.ST[signal_I];
+                    m_IK1306.ST[MOD42(signal_I + 2)] = m_IK1306.ST[MOD42(signal_I + 1)];
+                    m_IK1306.ST[MOD42(signal_I + 1)] = m_IK1306.ST[signal_I];
                     m_IK1306.ST[signal_I] = sigma;
           }
           else if(mi_hi == 0x0800){
                     tmp = m_IK1306.ST[signal_I];
-                    m_IK1306.ST[signal_I] = m_IK1306.ST[mod42_table[signal_I + 1]];
-                    m_IK1306.ST[mod42_table[signal_I + 1]] = m_IK1306.ST[mod42_table[signal_I + 2]];
-                    m_IK1306.ST[mod42_table[signal_I + 2]] = tmp;
+                    m_IK1306.ST[signal_I] = m_IK1306.ST[MOD42(signal_I + 1)];
+                    m_IK1306.ST[MOD42(signal_I + 1)] = m_IK1306.ST[MOD42(signal_I + 2)];
+                    m_IK1306.ST[MOD42(signal_I + 2)] = tmp;
           }
     }
 }
