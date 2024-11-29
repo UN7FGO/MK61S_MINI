@@ -1008,17 +1008,22 @@ const uint8_t IK1306_AND_AMK[1152] = {
 
 IK1306 m_IK1306;
 
-#define CycleE(J_signal_I) \
-        IK1302_Tick(signal_I, J_signal_I); \
-        IK1303_Tick(signal_I, J_signal_I); \
-        IK1306_Tick(signal_I, J_signal_I);
+inline __attribute__((always_inline))	//TODO: remove me
+static void _CycleE(int J_signal_I, mtick_t &signal_I) {
+	IK1302_Tick(signal_I, J_signal_I);
+	IK1303_Tick(signal_I, J_signal_I);
+	IK1306_Tick(signal_I, J_signal_I);
+}
 
 
-#define CycleB(J_signal_I)   \
-        IK1302_Tick(signal_I, J_signal_I); \
-        IK1303_Tick(signal_I, J_signal_I); \
-        IK1306_Tick(signal_I, J_signal_I); \
-        signal_I++;
+inline __attribute__((always_inline))	//TODO: remove me
+static void _CycleB(int J_signal_I, mtick_t &signal_I) {
+	_CycleE(J_signal_I, signal_I);
+	signal_I++;
+}
+
+#define CycleE(J_signal_I)	_CycleE(J_signal_I, signal_I)
+#define CycleB(J_signal_I)	_CycleB(J_signal_I, signal_I)
 
 #ifdef out_dump
 
@@ -1085,52 +1090,16 @@ void class_mk61_core::cycle(void)
       #ifdef out_dump
       dumpm(signal_I, count);
       #endif
-          CycleB(0);   // 0
-          CycleB(1);
-          CycleB(2);
-          CycleB(3);
-          CycleB(4);
-          CycleB(5);
 
-          CycleB(3);
-          CycleB(4);
-          CycleB(5);
-          CycleB(3);   // 9
-          CycleB(4);
-          CycleB(5);
-
-          CycleB(3);
-          CycleB(4);
-          CycleB(5);
-          CycleB(3);
-          CycleB(4);
-          CycleB(5);
-
-          CycleB(3);
-          CycleB(4);   // 19
-          CycleB(5);
-          CycleB(3);
-          CycleB(4);
-          CycleB(5);
-
-          CycleB(6);
-          CycleB(7);   // 25
-          CycleB(8);   // 26
+	  #pragma GCC unroll 99	//TODO: remove me
+	  for (auto _ : {0,1,2,3,4,5, 3,4,5,3,4,5, 3,4,5,3,4,5, 3,4,5,3,4,5, 6,7,8}) { CycleB(_); }	//0..26
 
           m_IK1302.pAND_AMK = m_IK1302.pAND_AMK1;
           m_IK1303.pAND_AMK = m_IK1303.pAND_AMK1;
           m_IK1306.pAND_AMK = m_IK1306.pAND_AMK1;
 
-          CycleB(0);   // 27
-          CycleB(1);
-          CycleB(2);   // 29
-
-          CycleB(3);
-          CycleB(4);
-          CycleB(5);
-          CycleB(6);
-          CycleB(7);
-          CycleB(8);
+	  #pragma GCC unroll 99	//TODO: remove me
+	  for (auto _ : {0,1,2, 3,4,5,6,7,8}) { CycleB(_); }	//27..35
 
           // signal == 36
       if (((uint8_t) IK1302_uI_hi) > 0x1f)
