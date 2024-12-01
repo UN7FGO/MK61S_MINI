@@ -1,4 +1,4 @@
-/* 
+﻿/* 
  * This file is part of the MK61S distribution (https://gitlab.com/vitasam/mk61s).
  * Copyright (c) 2020- vitasam.
  * 
@@ -1078,10 +1078,9 @@ uint16_t i;
 
 void class_mk61_core::cycle(void)
 {
-  mtick_t signal_I;
   const int MAX_CYCLE = (sergey_anvarov_hack_enable)? 280 : 560;
   for (int count = 1; count <= MAX_CYCLE; count++){
-      signal_I = 0;
+      mtick_t signal_I = 0;
 
       IK1302_GoZero();
       IK1303_GoZero();
@@ -1132,12 +1131,8 @@ void class_mk61_core::cycle(void)
           m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[MUL9((uint8_t) m_IK1306.uI_hi)];
       }
 
-          CycleB(0);   // 36
-          CycleB(1);   // 37
-          CycleB(2);   // 38
-          CycleB(3);   // 39
-          CycleB(4);
-          CycleE(5);    // 41
+	  #pragma GCC unroll 99	//TODO: remove me
+	  for (auto _ : {0,1,2, 3,4,5}) { CycleB(_); }	//36..41
 
           m_IK1302.pM += 42;
           m_IK1303.pM += 42;
@@ -1209,6 +1204,61 @@ void IK1302_Clear(void)
     m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[0];
 }
 
+// вариативность комбинаций полей комбинированного селектора alpha+betta (первых 12 бит микрокоманд)
+//	IK1302_mi       alpha+betta[28] = { 0,1,2,4,8,20,40,81,82,88,89,90,100,120,180,181,200,208,220,280,400,401,800,801,808,820,c01,c20 }
+//	IK1303_mi       alpha+betta[31] = { 0,1,2,4,8,20,81,88,89,90,a0,c0,100,120,180,181,190,1c0,200,209,220,280,400,401,420,540,801,808,820,840,c20 }
+//	IK1306_mi       alpha+betta[26] = { 0,1,2,4,5,8,20,21,28,81,88,89,90,100,101,180,201,400,401,420,800,801,808,809,820,c08 }
+//							cum[43] = { 0,1,2,4,5,8,20,21,28,40,81,82,88,89,90,a0,c0,100,101,120,180,181,190,1c0,200,201,208,209,220,280,400,401,420,540,800,801,808,809,820,840,c01,c08,c20 }
+
+// combined alpha&betta infer
+inline static 
+io_t alu_ab(IK1302 &dev, mtick_t _I, microinstruction_t mi, int amk) {	//TODO: change IK1302 to generic IK13_t
+    io_t alpha = 0;
+    io_t beta  = 0;
+/*	//classic emu145 reference code
+	if (mi      &  1)				alpha |=  dev.R [_I]       ;// (microinstruction      &  1) > 0
+	if (mi      &  2)				alpha |=  dev.pM[_I]       ;// (microinstruction      &  2) > 0
+	if (mi      &  4)				alpha |=  dev.ST[_I]       ;// (microinstruction      &  4) > 0
+	if (mi      &  8)				alpha |= ~dev.R [_I] & 0xf ;// (microinstruction      &  8) > 0
+	if (mi      & 16)	if (!dev.L)	alpha |=               0xa ;// (microinstruction      & 16) > 0
+	if (mi      & 32)				alpha |=  dev.S            ;// (microinstruction      & 32) > 0
+	if (mi      & 64)				alpha |=                 4 ;// (microinstruction      & 64) > 0
+	if (mi >> 7 &  1)				beta  |=  dev.S            ;// (microinstruction >> 7 &  1) > 0
+	if (mi >> 7 &  2)				beta  |= ~dev.S      & 0xf ;// (microinstruction >> 7 &  2) > 0
+	if (mi >> 7 &  4)				beta  |=  dev.S1           ;// (microinstruction >> 7 &  4) > 0
+	if (mi >> 7 &  8)				beta  |=                 6 ;// (microinstruction >> 7 &  8) > 0
+	if (mi >> 7 & 16)				beta  |=                 1 ;// (microinstruction >> 7 & 16) > 0
+	return( alpha+beta );
+*/
+
+	switch(IK1302_DCWA[amk]) {	//	microinstruction&0x7f => 01:30,00:13,20:12,08:5,02:3,10:2,40:1,04:1,09:1 
+			case 0     : alpha = 0; break;
+			case 0x0002: alpha = dev.R [_I]; break;
+			case 0x0004: alpha = dev.pM[_I]; break;
+			case 0x0006: alpha = dev.ST[_I]; break;
+			case 0x0008: alpha = ~dev.R[_I] & 0xf; break;
+			case 0x000A: if (dev.L == 0) alpha = 0xa; else alpha = 0; break;
+			case 0x000C: alpha = dev.S; break;
+			case 0x000E: alpha = 4; break;
+			case 0x0010: alpha = 0xf;
+	}
+
+	if        (mi & 0x0F80) {
+		switch(mi & 0x0F80) {	//	9 0000:27,0800:12,0080:12,0200:5,0180:4,0100:3,0400:2,0c00:2,0280:1
+			case 0x0800: alpha += 1; break;
+			case 0x0400: alpha += 6; break;
+			case 0x0C00: alpha += (1|6); break;
+			case 0x0080: alpha += dev.S; break;
+			case 0x0100: alpha += (~dev.S & 0xf); break;
+			case 0x0200: alpha += dev.S1; break;
+			case 0x0180: alpha += 0xf; break;
+			case 0x0280: alpha += (dev.S | dev.S1); break;
+		}
+	}
+	return( alpha );
+//*/
+}
+
 void IK1302_Tick(mtick_t signal_I, uint16_t J_signal_I)
 {
  uint32_t  microinstruction;
@@ -1234,30 +1284,7 @@ void IK1302_Tick(mtick_t signal_I, uint16_t J_signal_I)
     io_t sigma = 0;
 
     if((microinstruction & 0x7FFF) != 0){
-        switch(IK1302_DCWA[tmp/*m_IK1302.AMK*/]) {
-                case 0: alpha = 0; break;
-                case 0x0002: alpha = m_IK1302.R[signal_I]; break;
-                case 0x0004: alpha = m_IK1302.pM[signal_I]; break;
-                case 0x0006: alpha = m_IK1302.ST[signal_I]; break;
-                case 0x0008: alpha = ~m_IK1302.R[signal_I] & 0xf; break;
-                case 0x000A: if (m_IK1302.L == 0) alpha = 0xa; else alpha = 0; break;
-                case 0x000C: alpha = m_IK1302.S; break;
-                case 0x000E: alpha = 4; break;
-                case 0x0010: alpha = 0xf;
-        }
-
-        if((microinstruction & 0x0F80) != 0) {
-          switch(microinstruction & 0x0F80) {
-                case 0x0800: alpha += 1; break;
-                case 0x0400: alpha += 6; break;
-                case 0x0C00: alpha += (1|6); break;
-                case 0x0080: alpha += m_IK1302.S; break;
-                case 0x0100: alpha += (~m_IK1302.S & 0xf); break;
-                case 0x0200: alpha += m_IK1302.S1; break;
-                case 0x0180: alpha += 0xf; break;
-                case 0x0280: alpha += (m_IK1302.S | m_IK1302.S1); break;
-          }
-        }
+		alpha = alu_ab(m_IK1302, signal_I, microinstruction, tmp);
    //---------------------------------------------------------
         if (m_IK1302.flag_FC > 0){
                 if (m_IK1302.key_y == 0) m_IK1302.T = 0;
@@ -1302,7 +1329,7 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
     if (m_IK1302.MOD == 0 || signal_I >= 36) {
         tmp = IK1302_DCW[tmp/*m_IK1302.AMK*/];
         if(tmp != 0){
-          switch (tmp) {
+          switch (tmp) {	// page #109
             case 1: 
                 dbgln(CORE61, "R[", signal_I, "] = R[", MOD42(signal_I + 3));
                 m_IK1302.R[signal_I] = m_IK1302.R[MOD42(signal_I + 3)]; 
@@ -1400,8 +1427,9 @@ void IK1303_Tick(mtick_t signal_I, uint16_t J_signal_I)
    io_t sigma = 0;
    if((microinstruction & 0x7FFF) != 0){
 
-        switch(microinstruction & 0x007F){
+        switch(microinstruction & 0x007F){	//	01:19,00:15,20:15,40:4,08:4,09:4,02:3,10:3,04:1
                 case 0x0001: alpha = m_IK1303.R[signal_I]; break;
+                case 0x0000: alpha = 0;
                 case 0x0002: alpha = m_IK1303.pM[signal_I]; break;
                 case 0x0004: alpha = m_IK1303.ST[signal_I]; break;
                 case 0x0008: alpha = ~m_IK1303.R[signal_I] & 0xf; break;
@@ -1409,10 +1437,9 @@ void IK1303_Tick(mtick_t signal_I, uint16_t J_signal_I)
                 case 0x0010: if (m_IK1303.L == 0) alpha = 0xa; else alpha = 0; break;
                 case 0x0020: alpha = m_IK1303.S; break;
                 case 0x0040: alpha = 4; break;
-                case 0: alpha = 0;
         }
 
-        if((microinstruction & 0x0F80) != 0){
+        if((microinstruction & 0x0F80) != 0){	//0000:27,0080:10,0180:7,0200:6,0800:6,0100:5,0400:4,0c00:1,0500:1,0280:1
           switch(microinstruction & 0x0F80){
                 case 0x0800: alpha += 1; break;
                 case 0x0400: alpha += 6; break;
@@ -1569,8 +1596,9 @@ void IK1306_Tick(mtick_t signal_I, uint16_t J_signal_I)
     io_t gamma = 0;
     io_t sigma = 0;
     if((microinstruction & 0x3FFF) != 0){
-        switch(microinstruction & 0x007F) {
+        switch(microinstruction & 0x007F) {	//01:21,00:15,20:10,08:6,10:5,04:3,09:3,02:2,21:1,05:1,28:1
                 case 0x0001: alpha = m_IK1306.R[signal_I]; break;
+                case 0x0000: alpha = 0;
                 case 0x0002: alpha = m_IK1306.pM[signal_I]; break;
                 case 0x0004: alpha = m_IK1306.ST[signal_I]; break;
                 case 0x0005: alpha = m_IK1306.ST[signal_I] | m_IK1306.R[signal_I]; break;
@@ -1580,12 +1608,11 @@ void IK1306_Tick(mtick_t signal_I, uint16_t J_signal_I)
                 case 0x0020: alpha = m_IK1306.S; break;
                 case 0x0021: alpha = m_IK1306.S | m_IK1306.R[signal_I]; break;
                 case 0x0028: alpha = m_IK1306.S | (~m_IK1306.R[signal_I] & 0xf); break;
-                case 0x0040: alpha = 4; break;
-                case 0: alpha = 0;
+//              case 0x0040: alpha = 4; break;
         }
 
         if((microinstruction & 0x0F80) != 0) {
-           switch(microinstruction & 0x0F80) {
+           switch(microinstruction & 0x0F80) {	// stat: 0000:33,0080:12,0800:12,0100:4,0400:4,0200:1,0180:1,0c00:1
              case 0x0800: alpha += 1; break;
              case 0x0400: alpha += 6; break;
              case 0x0C00: alpha += 1|6; break;
