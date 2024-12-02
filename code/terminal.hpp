@@ -558,7 +558,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
         const i8 scan_code = sequence & 0xFF;
         if(scan_code < 0) break;
 
-        keyboard.cir_buff.write(scan_code);
+        kbd::push(scan_code);
         sequence >>= 8;
       }
       return -1;//key_sequence_on_cmd[code_61];
@@ -699,7 +699,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
               list_mk61_code_page();
             break;
           case  T_RESET:
-              if(Сonfirmation()) NVIC_SystemReset();
+              if(Confirmation()) NVIC_SystemReset();
             break;
           case  T_DFU_FLASH:
               DFU_enable();
@@ -779,10 +779,10 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
               flash_map_list();
             break;
           case  T_RUN: 
-              keyboard.cir_buff.write(38); // F
-              keyboard.cir_buff.write(10); // /-/
-              keyboard.cir_buff.write(31); // В/О
-              keyboard.cir_buff.write(30); // C/П
+              kbd::push(38); // F
+              kbd::push(10); // /-/
+              kbd::push(31); // В/О
+              kbd::push(30); // C/П
             break;
           case  T_POKE_CODE:
               input_R_stack();

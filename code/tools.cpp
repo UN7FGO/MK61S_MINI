@@ -4,7 +4,7 @@
 #include "lcd_gui.hpp"
 #include "tools.hpp"
 #include "mk61emu_core.h"
-#include "keyboard.hpp"
+#include "keyboard.h"
 #include "cross_hal.h"
 #include <SPI.h>
 #include <SPIFlash.h>
@@ -16,7 +16,6 @@
 using namespace led;
 
 extern class_mk61_core mk61s;
-extern class_keyboard keyboard;
 
 const  class_LCD_Label  DFU_message(0, 0);
 const  class_LCD_Label  STORE_message(0, 0);
@@ -43,11 +42,11 @@ void DFU_enable(void) {
  
 }
 
-bool  Сonfirmation(void) {
+bool  Confirmation(void) {
   extern void lcd_std_display_redraw(void);
 
     lcd.setCursor(0,0); lcd.print("press OK confirm");
-    i32 key = keyboard.get_key_wait();
+    i32 key = kbd::get_key_wait();
     lcd_std_display_redraw();
 
     return (key == KEY_OK);
@@ -62,7 +61,7 @@ void  sound(usize pin, isize freq_Hz, usize duration_ms) {
 void message_and_waitkey(const char* lcd_message) {
   led::on();
   lcd.setCursor(0, 1); lcd.print(lcd_message);
-  keyboard.get_key_wait();
+  kbd::get_key_wait();
   led::off();
 }
 
@@ -84,6 +83,8 @@ usize seek_program_END(u8* code_page) {
     lastCommand--;
   }
   lastCommand++;
+  lastCommand++;
+
   return lastCommand;
 }
 
@@ -282,7 +283,7 @@ bool Store(void) {
     #endif
     sound(PIN_BUZZER, 4000, 750);
     lcd.setCursor(0, 0); lcd.print("OVER"); lcd.setCursor(8, 0); lcd.print("press OK");
-    if(keyboard.get_key_wait() != KEY_OK) return false; // error
+    if(kbd::get_key_wait() != KEY_OK) return false; // error
   }
 
   #ifdef DEBUG_SPIFLASH
@@ -321,7 +322,7 @@ using namespace action;
 bool  EraseFlash(void) {
   sound(PIN_BUZZER, 4000, 750);   
   lcd.setCursor(0, 0); lcd.print("press OK ERASED!"); 
-  if(keyboard.get_key_wait() != KEY_OK) return action::MENU_BACK; 
+  if(kbd::get_key_wait() != KEY_OK) return action::MENU_BACK; 
  // стираем внешний флеш 
   lcd.clear(); lcd.setCursor(0, 0); lcd.print("Erase slot ");
   for(usize i=0; i <= MAX_SLOT_FOR_PROGRAM; i++){

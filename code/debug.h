@@ -27,6 +27,7 @@ namespace dbg {
   extern void print(const char* text_0, const isize var_0, const char* text_1, const isize var_1);
   extern void println(const char* text_0, const isize var_0, const char* text_1, const isize var_1);
   extern void println(const char* text_0, const isize var_0, const char* text_1, const char* text_2);
+  extern void println(const char* text_0, const isize var_0, const char* text_1, const isize var_1, const char* text_2);
   extern void println(const char* text_0, const isize var_0, const char* text_1, const isize var_1, const char* text_2, const isize var_2);
   extern void println(const char* text_0, const isize var_0, const char* text_1, const isize var_1, const char* text_2, const isize var_2, const char* text_3, const isize var_3);
 }

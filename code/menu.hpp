@@ -1,7 +1,7 @@
 #ifndef MENU_CLASS
 #define MENU_CLASS
 
-#include  "keyboard.hpp"
+#include  "keyboard.h"
 #include  "basic.hpp"
 #include  "tools.hpp"
 #include  "library_pmk.hpp"

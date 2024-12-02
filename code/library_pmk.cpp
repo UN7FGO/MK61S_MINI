@@ -2,8 +2,9 @@
 #include  "rust_types.h"
 #include  "mk61emu_core.h"
 #include  "lcd_gui.hpp"
-#include  "keyboard.hpp"
+#include  "keyboard.h"
 #include  "cross_hal.h"
+#include "debug.h"
 
 extern  class_mk61_core    mk61s;
 
@@ -204,7 +205,7 @@ void  init_library(void) {
   selGame = 0;
 }
 
-int   select_from(class_keyboard keyboard, usize COUNT, TPunct* list, i8& selector) {
+int   select_from(usize COUNT, TPunct* list, i8& selector) {
   do {
     const int delta = (selector + 1) - 2;
     const int up = (delta <= 0)? 0 : delta;
@@ -220,7 +221,7 @@ int   select_from(class_keyboard keyboard, usize COUNT, TPunct* list, i8& select
       lcd.print(list[real_index].text);
     }
 
-    const i32 last_key_code = keyboard.get_key_wait();
+    const i32 last_key_code = kbd::get_key_wait();
     switch(last_key_code) {
       case KEY_RIGHT_PRESS:
           if((isize) selector < (isize) (COUNT-1)) selector++;
@@ -265,12 +266,12 @@ void  load_from(usize offs, /*TPunct* list,*/ u8* data_stream) {
   }
 }
 
-int   select_program(class_keyboard keyboard) {
-  return select_from(keyboard, COUNT_PROGRAMS, programs, selProgram);
+int   select_program(void) {
+  return select_from(COUNT_PROGRAMS, programs, selProgram);
 }
 
-int   select_game(class_keyboard keyboard) {
-  return select_from(keyboard, COUNT_GAMES, games, selGame);
+int   select_game(void) {
+  return select_from(COUNT_GAMES, games, selGame);
 }
 
 void  load_program(usize nProg_for_load) {

@@ -4,8 +4,10 @@
 #include "tools.hpp"
 #include "menu.hpp"
 #include "basic.hpp"
-#include "keyboard.hpp"
+#include "keyboard.h"
 #include "cross_hal.h"
+
+using namespace kbd;
 
 /*
    Cx,  Bx, MUL, DIV, NON,
@@ -140,7 +142,7 @@ int  AssignBasic(void) {
   if(NextBasic < 0) {
     lcd.setCursor(0, 0); lcd.print("BASIC is empty!");
     lcd.setCursor(0, 1); lcd.print("Press any key...");
-    keyboard.get_key_wait();
+    kbd::get_key_wait();
   } else {
 
     lcd.setCursor(0, 0); lcd.print("Assign BASIC:");
@@ -150,7 +152,7 @@ int  AssignBasic(void) {
         lcd.print(i); 
         if(i == active) lcd.write(LCD_LT_ARROW_CHAR); else lcd.write(' ');
       }
-      const i32 key = keyboard.get_key_wait();
+      const i32 key = kbd::get_key_wait();
       switch(key) {
         case  KEY_LEFT: 
             if(active > 0) active--;
@@ -206,7 +208,7 @@ bool  IsDigit(char symbol) {
 bool ErrorBasic(const char* text) {
   lcd.setCursor(0,0); lcd.print("Error BASIC!");
   lcd.setCursor(0,1); lcd.print(text);
-  keyboard.get_key_wait();
+  kbd::get_key_wait();
   return false;
 }
 
@@ -305,14 +307,14 @@ void  EditBasic(void) { // Редактирования строки BASIC
   lcd.setCursor(0,1); lcd.print((char*) &program[1][0]);
   lcd.setCursor(0,0); lcd.write(cursor_blinked_char); lcd.setCursor(0,0);
 
-  keyboard.process_init();
+  kbd::debounce_init();
   blink_cursor_time = millis() + CURSOR_BLINK_MS;
 
   while(true) {
     // Цикл ожиадния нажатия клавиши 
       const u32 now = millis();
-      keyboard.scan_and_debounced();
-      i32 key_code = keyboard.get_key(key_state::PRESSED);
+      kbd::scan_and_debounced();
+      i32 key_code = kbd::get_key(key_state::PRESSED);
 
       if(now >= blink_cursor_time) {
           cursor_blinked_char = (cursor_blink_on)? cursor : program[line][idx];

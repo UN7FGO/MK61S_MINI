@@ -12,7 +12,7 @@ bool  HardwareInfo(void) {
   lcd.clear(); 
   lcd.setCursor(0,0); lcd.print("Chip:"); lcd.print(chip_name);
   lcd.setCursor(0,1); lcd.print(mem_text);
-  keyboard.get_key_wait();
+  kbd::get_key_wait();
   return action::MENU_BACK;
 }
 
@@ -24,7 +24,7 @@ bool  InfoData(void) {
   if(flash_is_ok) lcd.print(" W25"); 
   lcd.setCursor(0,1); 
   lcd.print("run "); lcd.print(runtime_ms); lcd.print(" ms");
-  keyboard.get_key_wait();
+  kbd::get_key_wait();
   return false;
 }
 
@@ -95,7 +95,7 @@ bool   TurnSound(void) {
 }
 
 bool  mk61_library_select(void) {
-  const int n = select_program(keyboard);
+  const int n = select_program();
   if(n < 0) return action::MENU_BACK;
 
   load_program(n);
@@ -103,7 +103,7 @@ bool  mk61_library_select(void) {
 }
 
 bool  mk61_games_select(void) {
-  const int n = select_game(keyboard);
+  const int n = select_game();
   if(n < 0) return action::MENU_BACK;
 
   load_game(n);
@@ -137,7 +137,7 @@ void class_menu::select(void) {
   lcd.clear();
   do{
     draw();
-    const i32 last_key_code = keyboard.get_key_wait();
+    const i32 last_key_code = kbd::get_key_wait();
     switch(last_key_code) {
       case KEY_RIGHT_PRESS:
               if(active_punct < (MENU_PUNCT_COUNT-1)) active_punct++;

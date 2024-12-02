@@ -2,7 +2,7 @@
 #define MK61_MK52_CROSS_HAL
 
 #include "rust_types.h"
-#include "keyboard.hpp"
+#include "keyboard.h"
 
 static const u32               KEY_Px     =   28;
 static const u32               KEY_xP     =   27;

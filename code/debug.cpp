@@ -90,6 +90,12 @@ void println(const char* text_0, const isize var_0, const char* text_1, const is
     Serial.print(text_0); Serial.print(var_0); Serial.print(text_1); Serial.println(var_1);
 }
 
+void println(const char* text_0, const isize var_0, const char* text_1, const isize var_1, const char* text_2) {
+    Serial.print(text_0); Serial.print(var_0); 
+    Serial.print(text_1); Serial.print(var_1); 
+    Serial.println(text_2);
+}
+
 void println(const char* text_0, const isize var_0, const char* text_1, const isize var_1, const char* text_2, const isize var_2) {
     Serial.print(text_0); Serial.print(var_0); Serial.print(text_1); Serial.print(var_1); Serial.print(text_2); Serial.println(var_2);
 }

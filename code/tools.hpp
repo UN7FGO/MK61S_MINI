@@ -22,7 +22,7 @@ static const int count_switch_R_GRD_G = 107;
 extern bool flash_is_ok;
 extern void DFU_enable(void);
 extern void message_and_waitkey(const char* lcd_message);
-extern bool Сonfirmation(void);
+extern bool Confirmation(void);
 extern isize calc_address(usize nSlot);
 extern char* ReadSlotName(usize nSlot, char* slot_name);
 extern bool Rename(usize nSlot, char* slot_name);
