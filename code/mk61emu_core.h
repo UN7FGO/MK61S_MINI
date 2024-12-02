@@ -122,7 +122,7 @@ typedef struct
 {
     microinstruction_t microinstructions[68]; // микрокоманды
     instruction_t instructions[256];     // команды
-    uint8_t microprograms[1152];   // микропрограммы (синхропрограммы - последовательности микрокоманд)
+    //uint8_t microprograms[1152];   // микропрограммы (синхропрограммы - последовательности микрокоманд)
 } IK13_ROM;
 
 /**

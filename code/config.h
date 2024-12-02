@@ -25,10 +25,14 @@
 //#define CDU
 //#define LK432
 //#define SERIAL_OUTPUT
-#define REVISION_V3
-//#define REVISION_V2
+//#define REVISION_V3
+#define REVISION_V2
 #define MK61s
 //#define MK52s
+
+#define IS_CORTEX_M4() (__ARM_ARCH == 7)
+//defined(__ARM_ARCH_7EM__)
+//defined(__ARM_FEATURE_SIMD32)
 
 #if defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
  #define SERIAL_OUTPUT
