@@ -4,7 +4,7 @@
 ![Arduino](https://img.shields.io/badge/-Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white)
 
 
-# MK61S_MINI (test)
+# MK61S_MINI
 
 Развитие проекта эмулятора МК-61s - <a href="https://web.archive.org/web/20231130170055/https://gitlab.com/vitasam/mk61s/">gitlab.com/vitasam/mk61s</a>
 
@@ -42,7 +42,9 @@ https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Programming.pdf
 **Инструкция по работе с Терминалом:**  
 https://github.com/UN7FGO/MK61S_MINI/blob/main/doc/MK61s-mini-Terminal.pdf
 
-**Литературное творчество о Проекте:**  - https://habr.com/ru/articles/860226/
+**Литературное творчество о Проекте:** - https://habr.com/ru/articles/860226/
+
+**Видеоинструкция по сборке от Виталия (FANJET)** - https://www.youtube.com/watch?v=JBStgbfmuOs
 
 Желающие поправить проект "под себя", могут это сделать на Open Source Hardware Lab - <a href="https://oshwlab.com/un7fgo/mk61s_v1_copy_copy_copy_copy"> ЗДЕСЬ </a>
 
