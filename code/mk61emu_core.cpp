@@ -25,18 +25,60 @@
 #include "debug.h"
 #include "config.h"
 #include "tools.hpp"
+#include "rust_types.h"
 
-void IK1302_Tick(mtick_t signal_I, uint16_t J_signal_I);
-void IK1302_GoZero(void);
+typedef struct {  // Структору ПЗУ для одной микросхемы комплекта К145ИК(02,03,06)
+    microinstruction_t microinstructions[68]; // микрокоманды
+    instruction_t instructions[256];          // команды
+} IK13_ROM;
+
+typedef struct { // ПЗУ микрокода, микропрограмм для всего комплекта К145ИК(02,03,06) МК61
+    IK13_ROM IK1302;
+    IK13_ROM IK1303;
+    IK13_ROM IK1306;
+} mk61ROM_t;
+
+typedef struct { // Структура микросхемы К145IИК303 
+    uint8_t *pM;
+    uint8_t R[IK13_MTICK_COUNT];
+    uint8_t ST[IK13_MTICK_COUNT];
+
+    io_t AMK, MOD;
+    io_t S, S1, L, T, P;
+
+    //uint16_t uI_hi;     // Instruction HI word
+    uint8_t  flag_FC;
+    uint8_t *pAND_AMK;  // Precalc offset from microprograms for signal_I 0..26
+    uint8_t *pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
+    uint16_t key_x, key_xm, key_y, comma;
+}  IK1303;
+
+typedef struct { // Структура микросхемы К145IИК306 
+    //uint16_t uI_hi;  // Instruction HI word
+    uint32_t AMK;
+
+    uint32_t  L, S, S1, P, T, MOD, flag_FC;
+
+    uint8_t   R[IK13_MTICK_COUNT];
+    uint8_t   ST[IK13_MTICK_COUNT];
+
+    uint8_t*  pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
+    uint8_t*  pAND_AMK;
+    uint8_t*  pM;
+}  IK1306;
+
+void IK1302_Tick(mtick_t signal_I, usize J_signal_I);
 void IK1302_Clear(void);
 
-void IK1303_Tick(mtick_t signal_I, uint16_t J_signal_I);
-void IK1303_GoZero(void);
+void IK1303_Tick(mtick_t signal_I, usize J_signal_I);
 void IK1303_Clear(void);
 
-void IK1306_Tick(mtick_t signal_I, uint16_t J_signal_I);
-void IK1306_GoZero(void);
+void IK1306_Tick(mtick_t signal_I, usize J_signal_I);
 void IK1306_Clear(void);
+
+/* Кольцо ДОЗУ - последовательно соединенная память комплектов микросхем К145ИК(02,03,06) в МК61 */
+u8 ringM[SIZE_RING_M/*252+252+42+42+42+42*/];
+const u8* END_ring_M = &ringM[SIZE_RING_M/*252+252+42+42+42+42*/];
 
 const bool sergey_anvarov_hack_enable = true;
 
@@ -47,42 +89,53 @@ static const char default_symbols[16] = {
 };
 
 #include <array>
-constexpr static std::array<uint8_t, 256> div3_table = []() {
-  std::array<uint8_t, 256> _{};
-  for (auto i=0; i<256; i++) _[i]=i/3;
-  return _;
-}();
+#if IS_CORTEX_M4() //__ARM_ARCH == 7
+  #warning("Hardware mul/div present!")
+#else
+  #warning("Hardware mul/div unavaliable! Instantiate multiply by 9 and divide by 3 as constant table!")
+  constexpr static const std::array<uint8_t, 256> div3_table = []() {
+    std::array<uint8_t, 256> _{};
+    for (auto i=0; i<256; i++) _[i]=i/3;
+    return _;
+  }();
 
-constexpr static std::array<uint8_t, 256> mul9_table = []() {
-  std::array<uint8_t, 256> _{};
-  for (auto i=0; i<256; i++) _[i]=i*9;
-  return _;
-}();
+  constexpr static const std::array<uint8_t, 256> mul9_table = []() {
+    std::array<uint8_t, 256> _{};
+    for (auto i=0; i<256; i++) _[i]=i*9;
+    return _;
+  }();
+#endif
 
-constexpr static std::array<uint8_t, 256> mod42_table = []() {
+/*static std::array<uint8_t, 42+41> mod42_table = []() {
+  std::array<uint8_t, 42+41> _{};
+  for (auto i=0; i<42+41; i++) _[i]=i%42;
+  return _;
+}();*/
+/*
+static std::array<uint8_t, 256> __attribute__ ((aligned (16))) mod42_table = []() {
   std::array<uint8_t, 256> _{};
   for (auto i=0; i<256; i++) _[i]=i%42;
   return _;
 }();
+*/
+static u8 __attribute__ ((aligned (16))) mod42_table[42+41];
 
-#define DIV3(v)     (div3_table[v])
+#define DIV3(v)         (((v)*171)>>9)  //(div3_table[v]) 
 //#define DIV3(v)       (((v)*171)>>9)
 //#define DIV3(v)       ((v)/3)         //udiv M3/M4 
 
 #if IS_CORTEX_M4() //__ARM_ARCH == 7
-  #warning("Hardware mul/div using!")
   #define MUL9(v)       ((v)*9)
 #else
-  #warning("Hardware mul/div unavaliable! Instantiate multiply by 9 table as constant array!")
   #define MUL9(v)       (mul9_table[v])
 //#define MUL9(v)       ((v)*9)
 //#define MUL9(v)       ( ((v)+((v)<<3)) &0xff )
 #endif
 
-#define MOD42(v)    (mod42_table[v])
+#define MOD42(v)       (mod42_table[v])
 //#define MOD42(v)  ( ((v) %42) &0xff )
 
-const mk61ROM_t ROM = {
+static const mk61ROM_t ROM = {
         IK1302: {
                 microinstructions: {
                         0x0000000, 0x0800001, 0x0A00820, 0x0040020, // 1
@@ -345,8 +398,7 @@ const mk61ROM_t ROM = {
                 }
         }
 };
-uint8_t ringM[SIZE_RING_M/*252+252+42+42+42+42*/];
-const uint8_t* END_ring_M = &ringM[SIZE_RING_M/*252+252+42+42+42+42*/];
+
 /*
 const uint8_t* IK1302_M_START = &ringM[42+42];
 const uint8_t* IK1303_M_START = &ringM[42];
@@ -358,10 +410,10 @@ const uint8_t* IK1303_M_START = &ringM[OFFSET_IK1303/*252+42+42+42*/];
 const uint8_t* IK1306_M_START = &ringM[OFFSET_IK1306/*252+42+42+42+42*/];
 
 IK1302 m_IK1302;
-uint16_t IK1302_uI_hi;         // Instruction HI word
+//uint16_t IK1302_uI_hi;         // Instruction HI word
 IK1303 m_IK1303;
 
-const uint8_t IK1302_DCW[68] = {
+static const uint8_t IK1302_DCW[68] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x02, 0x00, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x02, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
@@ -369,7 +421,7 @@ const uint8_t IK1302_DCW[68] = {
   0x03, 0x00, 0x00, 0x00
 };
 
-const uint8_t IK1302_DCWA[68] = {
+static const uint8_t IK1302_DCWA[68] = {
   0x00, 0x02, 0x0C, 0x0C, 0x0C, 0x02, 0x02, 0x00, 0x02, 0x00, 0x10, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C,
   0x02, 0x02, 0x00, 0x02, 0x02, 0x02, 0x02, 0x02, 0x0A, 0x02, 0x02, 0x02, 0x02, 0x00, 0x00, 0x02,
   0x02, 0x08, 0x08, 0x00, 0x0E, 0x00, 0x00, 0x08, 0x02, 0x04, 0x08, 0x02, 0x08, 0x02, 0x06, 0x0C,
@@ -377,7 +429,7 @@ const uint8_t IK1302_DCWA[68] = {
   0x00, 0x00, 0x02, 0x02
 };
 
-const uint8_t IK1303_DCW[68] = {
+static const uint8_t IK1303_DCW[68] = {
   00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 03, 00, 00, 00, 00,
   00, 00, 00, 02, 00, 00, 00, 00, 03, 00, 00, 00, 01, 00, 00, 00,
   00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 03, 00, 01,
@@ -385,7 +437,7 @@ const uint8_t IK1303_DCW[68] = {
   00, 00, 00, 00
 };
 
-const uint8_t IK1306_DCW[68] = {
+static const uint8_t IK1306_DCW[68] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
   0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x02, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02,
@@ -393,7 +445,7 @@ const uint8_t IK1306_DCW[68] = {
   0x02, 0x02, 0x00, 0x00
 };
 
-const uint8_t IK1302_AND_AMK[1152] = {
+static const uint8_t IK1302_AND_AMK[1152] = {
   0x00, 0x00, 0x00, 0x10, 0x03, 0x1D, 0x00, 0x07, 0x1E, 0x10, 0x03, 0x1C, 0x0B, 0x07, 0x0C, 0x1E,
   0x00, 0x00, 0x15, 0x18, 0x09, 0x16, 0x18, 0x09, 0x16, 0x18, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x0E, 0x1E, 0x33, 0x00, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00,
@@ -468,7 +520,7 @@ const uint8_t IK1302_AND_AMK[1152] = {
   0x08, 0x36, 0x00, 0x08, 0x12, 0x00, 0x00, 0x03, 0x1E, 0x0F, 0x26, 0x0A, 0x02, 0x26, 0x40, 0x08
 };
 
-const uint8_t IK1303_AND_AMK[1152] = {
+static const uint8_t IK1303_AND_AMK[1152] = {
   0x2C, 0x23, 0x00, 0x2C, 0x23, 0x00, 0x2C, 0x23, 0x30, 0x31, 0x32, 0x00, 0x31, 0x32, 0x12, 0x31,
   0x32, 0x30, 0x00, 0x00, 0x00, 0x11, 0x23, 0x00, 0x1F, 0x06, 0x00, 0x31, 0x00, 0x1C, 0x31, 0x00,
   0x00, 0x31, 0x08, 0x1D, 0x2C, 0x02, 0x0E, 0x2C, 0x02, 0x01, 0x2C, 0x02, 0x08, 0x08, 0x3A, 0x00,
@@ -543,7 +595,7 @@ const uint8_t IK1303_AND_AMK[1152] = {
   0x05, 0x06, 0x3C, 0x05, 0x06, 0x00, 0x00, 0x06, 0x0C, 0x0C, 0x00, 0x00, 0x12, 0x24, 0x1D, 0x1D
 };
 
-const uint8_t IK1306_AND_AMK[1152] = {
+static const uint8_t IK1306_AND_AMK[1152] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2C, 0x2A, 0x27, 0x13, 0x2B, 0x27, 0x13,
   0x2B, 0x27, 0x34, 0x2A, 0x27, 0x13, 0x2B, 0x27, 0x13, 0x2B, 0x27, 0x29, 0x2A, 0x35, 0x29, 0x2B,
   0x35, 0x29, 0x2B, 0x35, 0x29, 0x12, 0x35, 0x29, 0x42, 0x35, 0x29, 0x42, 0x35, 0x2E, 0x00, 0x00,
@@ -641,8 +693,8 @@ inline void __attribute__((always_inline)) _CycleB(int J_signal_I, mtick_t &sign
 
 uint16_t step = 0;
 
-void dumpm(uint16_t sig, uint16_t cyc){
-uint16_t i;
+void dumpm(uint16_t sig, uint16_t cyc) {
+ uint16_t i;
         printf("st %2.2d cy %3.3d si %2.2d\n(%d,%d)1302 R dump:\n",step,cyc,sig,IK1302_key_x,IK1302_key_y);
         for(i=0;i<42;i++){
                 if((i % 15) == 0) printf("\n%2.2X ", i);
@@ -688,16 +740,62 @@ uint16_t i;
 }
 #endif
 
-void class_mk61_core::cycle(void)
-{
+inline usize IK1302_GoZero(void) {
+    uint32_t uI = ROM.IK1302.instructions[(uint16_t)m_IK1302.R[36] + 16 * (uint16_t)m_IK1302.R[39]];
+    const usize IK1302_uI_hi = uI >> 16;
+
+
+    m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[MUL9((uint8_t) uI)];
+    m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[MUL9((((uint16_t) uI) >> 8))];
+
+    m_IK1302.MOD = (uint8_t) (uI >> 24);
+    m_IK1302.flag_FC = IK1302_uI_hi & 0x00FC;
+    if (m_IK1302.flag_FC== 0) m_IK1302.T = 0;
+
+    m_IK1302.key_xm = m_IK1302.key_x - 1;
+  
+  return IK1302_uI_hi;
+}
+
+inline usize IK1303_GoZero(void) {
+    uint32_t uI = ROM.IK1303.instructions[(uint16_t)m_IK1303.R[36] + 16 * (uint16_t)m_IK1303.R[39]];
+    const usize IK1303_uI_hi = uI >> 16;
+
+    m_IK1303.pAND_AMK = (uint8_t*) &IK1303_AND_AMK[ MUL9((uint8_t) uI) ];
+    m_IK1303.pAND_AMK1 = (uint8_t*) &IK1303_AND_AMK[ MUL9((((uint16_t) uI) >> 8)) ];
+
+    m_IK1303.MOD = (uint8_t) (uI >> 24);
+    m_IK1303.flag_FC = IK1303_uI_hi & 0x00FC;
+    if (m_IK1303.flag_FC == 0) m_IK1303.T = 0;
+
+    m_IK1303.key_xm = m_IK1303.key_x - 1;
+  
+  return IK1303_uI_hi;
+}
+
+inline usize IK1306_GoZero(void) {
+    uint32_t uI = ROM.IK1306.instructions[m_IK1306.R[36] + 16 * m_IK1306.R[39]];
+    const usize IK1306_uI_hi = uI >> 16;
+
+    m_IK1306.pAND_AMK = (uint8_t*) &IK1306_AND_AMK[MUL9((uint8_t) uI)];
+    m_IK1306.pAND_AMK1 = (uint8_t*) &IK1306_AND_AMK[MUL9((((uint16_t) uI) >> 8))];
+
+    m_IK1306.MOD = (uint8_t) (uI >> 24);
+
+  return IK1306_uI_hi;
+}
+
+void cycle(void) {
   mtick_t signal_I;
   const int MAX_CYCLE = (sergey_anvarov_hack_enable)? 280 : 560;
   for (int count = 1; count <= MAX_CYCLE; count++){
       signal_I = 0;
 
-      IK1302_GoZero();
-      IK1303_GoZero();
-      IK1306_GoZero();
+      const u8 IK1302_uI_hi = (u8) IK1302_GoZero();
+      const u8 IK1303_uI_hi = (u8) IK1303_GoZero();
+      const u8 IK1306_uI_hi = (u8) IK1306_GoZero();
+
+      dbghexln(CORE61, "IK1302.IP = 0x", (u16) m_IK1302.R[36] + 16 * (u16) m_IK1302.R[39]);
 
       #ifdef out_dump
       dumpm(signal_I, count);
@@ -714,34 +812,34 @@ void class_mk61_core::cycle(void)
           for (auto _ : {0,1,2, 3,4,5,6,7,8}) { CycleB(_); }	//27..35
 
       // signal == 36
-      if (((uint8_t) IK1302_uI_hi) > 0x1f)
+      if (IK1302_uI_hi > 0x1f)
       {
-          m_IK1302.R[37] = ((uint8_t) IK1302_uI_hi) & 0xf;   // signal == 36
-          m_IK1302.R[40] = ((uint8_t) IK1302_uI_hi) >> 4;    // signal == 36
+          m_IK1302.R[37] = IK1302_uI_hi & 0xf;   // signal == 36
+          m_IK1302.R[40] = IK1302_uI_hi >> 4;    // signal == 36
           m_IK1302.pAND_AMK  = (uint8_t*) &IK1302_AND_AMK[0x5f * 9];
       }
       else{
-          m_IK1302.pAND_AMK  = (uint8_t*) &IK1302_AND_AMK[MUL9((uint8_t) IK1302_uI_hi)];
+          m_IK1302.pAND_AMK  = (uint8_t*) &IK1302_AND_AMK[MUL9(IK1302_uI_hi)];
       }
 
-      if ((uint8_t) m_IK1303.uI_hi > 0x1f)
+      if (IK1303_uI_hi > 0x1f)
       {
-          m_IK1303.R[37] = ((uint8_t) m_IK1303.uI_hi) & 0xf;   // signal == 36
-          m_IK1303.R[40] = ((uint8_t) m_IK1303.uI_hi) >> 4;    // signal == 36
+          m_IK1303.R[37] = (IK1303_uI_hi) & 0xf;   // signal == 36
+          m_IK1303.R[40] = (IK1303_uI_hi) >> 4;    // signal == 36
           m_IK1303.pAND_AMK  = (uint8_t*) &IK1303_AND_AMK[0x5f * 9];
       }
       else{
-           m_IK1303.pAND_AMK  = (uint8_t*) &IK1303_AND_AMK[MUL9((uint8_t) m_IK1303.uI_hi)];
+           m_IK1303.pAND_AMK  = (uint8_t*) &IK1303_AND_AMK[MUL9(IK1303_uI_hi)];
       }
 
-      if ((uint8_t) m_IK1306.uI_hi > 0x1f)
+      if (IK1306_uI_hi > 0x1f)
       {
-          m_IK1306.R[37] = ((uint8_t) m_IK1306.uI_hi) & 0xf;   // signal == 36
-          m_IK1306.R[40] = ((uint8_t) m_IK1306.uI_hi) >> 4;    // signal == 36
+          m_IK1306.R[37] = (IK1306_uI_hi) & 0xf;   // signal == 36
+          m_IK1306.R[40] = (IK1306_uI_hi) >> 4;    // signal == 36
           m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[0x5f * 9];
       }
       else{
-          m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[MUL9((uint8_t) m_IK1306.uI_hi)];
+          m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[MUL9(IK1306_uI_hi)];
       }
 
           CycleB(0);   // 36
@@ -769,63 +867,27 @@ void class_mk61_core::cycle(void)
 #endif
 }
 
-void IK1302_GoZero(void)
-{
-    uint32_t uI = ROM.IK1302.instructions[(uint16_t)m_IK1302.R[36] + 16 * (uint16_t)m_IK1302.R[39]];
-    IK1302_uI_hi = uI >> 16;
-
-
-    m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[MUL9((uint8_t) uI)];
-    m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[MUL9((((uint16_t) uI) >> 8))];
-
-    m_IK1302.MOD = (uint8_t) (uI >> 24);
-    m_IK1302.flag_FC = IK1302_uI_hi & 0x00FC;
-    if (m_IK1302.flag_FC== 0) m_IK1302.T = 0;
-
-    m_IK1302.key_xm = m_IK1302.key_x - 1;
-}
-
-void IK1303_GoZero(void)
-{
-    uint32_t uI = ROM.IK1303.instructions[(uint16_t)m_IK1303.R[36] + 16 * (uint16_t)m_IK1303.R[39]];
-    m_IK1303.uI_hi = uI >> 16;
-
-    m_IK1303.pAND_AMK = (uint8_t*) &IK1303_AND_AMK[ MUL9((uint8_t) uI) ];
-    m_IK1303.pAND_AMK1 = (uint8_t*) &IK1303_AND_AMK[ MUL9((((uint16_t) uI) >> 8)) ];
-
-    m_IK1303.MOD = (uint8_t) (uI >> 24);
-    m_IK1303.flag_FC = m_IK1303.uI_hi & 0x00FC;
-    if (m_IK1303.flag_FC == 0) m_IK1303.T = 0;
-
-    m_IK1303.key_xm = m_IK1303.key_x - 1;
-}
-
-//uint8_t IK1302_DCWA[68];
-void IK1302_Clear(void)
-{
-    m_IK1302.pM = (uint8_t*) IK1302_M_START;
-    memset(m_IK1302.R, 0, sizeof(m_IK1302.R));
-    memset(m_IK1302.ST, 0, sizeof(m_IK1302.ST));
-    m_IK1302.AMK = 0;
-    m_IK1302.key_y = 0;
-    m_IK1302.key_x = 0;
-    m_IK1302.comma = 0;
-    m_IK1302.S = 0;
-    m_IK1302.S1 = 0;
-    m_IK1302.L = 0;
-
-    m_IK1302.T = 0;
-    m_IK1302.P = 0;
-    m_IK1302.MOD = 0;
-    m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[0];
-    m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[0];
-}
-
-void IK1302_Tick(mtick_t signal_I, uint16_t J_signal_I)
+void IK1302_Tick(mtick_t signal_I, usize J_signal_I)
 {
  uint32_t  microinstruction;
  uint32_t  val, tmp;
  uint32_t  mi_hi;
+
+// Вывод дампа отладочной информации 
+  dbg(CORE61, "I:", signal_I, " J:",  J_signal_I, " 1302.R[");
+  for(u8 R : m_IK1302.R) dbghex(CORE61, ".", R);
+  dbg(CORE61, "]\n 1302.ST[");
+  for(u8 ST : m_IK1302.ST) dbghex(CORE61, ".", ST);
+  dbghexln(CORE61, "]\n pM = $", (usize) m_IK1302.pM - (usize) &ringM[0], " pAND_AMK = $", (usize) m_IK1302.pAND_AMK - (usize) IK1302_AND_AMK, " pAND_AMK1 = $", (usize) m_IK1302.pAND_AMK1 - (usize) IK1302_AND_AMK);
+  dbghexln(CORE61, "AMK = ", m_IK1302.AMK);
+  dbghex(CORE61, "FLAGS L ", m_IK1302.L);
+  dbghex(CORE61, ":S ", m_IK1302.S);
+  dbghex(CORE61, ":S1 ", m_IK1302.S1);
+  dbghex(CORE61, ":P ", m_IK1302.P);
+  dbghex(CORE61, ":T ", m_IK1302.T);
+  dbghex(CORE61, ":MOD ", m_IK1302.MOD);
+  dbghexln(CORE61, ":flag_FC ", m_IK1302.flag_FC);
+
 
     tmp = (uint8_t) m_IK1302.pAND_AMK[J_signal_I];
     if (tmp > 59 && m_IK1302.L == 0){ // Если AMK больше 59 (60,61,62,63), то пересчитываются (60,62,64,66) или (61,63,65,67) при L=0
@@ -965,6 +1027,26 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
     }
 }
 
+//uint8_t IK1302_DCWA[68];
+void IK1302_Clear(void) {
+    m_IK1302.pM = (uint8_t*) IK1302_M_START;
+    memset(m_IK1302.R, 0, sizeof(m_IK1302.R));
+    memset(m_IK1302.ST, 0, sizeof(m_IK1302.ST));
+    m_IK1302.AMK = 0;
+    m_IK1302.key_y = 0;
+    m_IK1302.key_x = 0;
+    m_IK1302.comma = 0;
+    m_IK1302.S = 0;
+    m_IK1302.S1 = 0;
+    m_IK1302.L = 0;
+
+    m_IK1302.T = 0;
+    m_IK1302.P = 0;
+    m_IK1302.MOD = 0;
+    m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[0];
+    m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[0];
+}
+
 void IK1303_Clear(void)
 {
     m_IK1303.pM = (uint8_t*)IK1303_M_START;
@@ -984,7 +1066,7 @@ void IK1303_Clear(void)
     m_IK1303.pAND_AMK1  = (uint8_t*) &IK1303_AND_AMK[0];
 }
 
-void IK1303_Tick(mtick_t signal_I, uint16_t J_signal_I)
+void IK1303_Tick(mtick_t signal_I, usize J_signal_I)
 {
  uint32_t tmp;
  uint32_t microinstruction;
@@ -1136,17 +1218,6 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
     }
 }
 
-void IK1306_GoZero(void)
-{
-    uint32_t uI = ROM.IK1306.instructions[m_IK1306.R[36] + 16 * m_IK1306.R[39]];
-    m_IK1306.uI_hi = uI >> 16;
-
-    m_IK1306.pAND_AMK = (uint8_t*) &IK1306_AND_AMK[MUL9((uint8_t) uI)];
-    m_IK1306.pAND_AMK1 = (uint8_t*) &IK1306_AND_AMK[MUL9((((uint16_t) uI) >> 8))];
-
-    m_IK1306.MOD = (uint8_t) (uI >> 24);
-}
-
 void IK1306_Clear(void)
 {
     m_IK1306.pM = (uint8_t*)IK1306_M_START;
@@ -1162,7 +1233,7 @@ void IK1306_Clear(void)
     m_IK1306.pAND_AMK1  = (uint8_t*) &IK1306_AND_AMK[0];
 }
 
-void IK1306_Tick(mtick_t signal_I, uint16_t J_signal_I)
+void IK1306_Tick(mtick_t signal_I, usize J_signal_I)
 {
     uint32_t tmp, mi_hi;
     uint32_t microinstruction;
@@ -1282,31 +1353,16 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
  */
 
 void MK61Emu_Cleanup() {
+    for(usize i=0; i < (42+41); i++) mod42_table[i] = i%42;
     memset(&ringM,0,sizeof(ringM));
     IK1302_Clear();
     IK1303_Clear();
     IK1306_Clear();
 }
 
-void class_mk61_core::enable(void) {
-    MK61Emu_Cleanup();
-    //MK61Emu_SetAngleUnit(RADIAN);
-    clear_displayed();
-    backstep_comma_position = get_comma_position();
-    step();
-}
-
 void MK61Emu_SetKeyPress(const int key1, const int key2) {
     m_IK1302.key_x = key1;
     m_IK1302.key_y = key2;
-}
-
-void class_mk61_core::step(void) {
-    m_IK1303.key_y = 1;
-    m_IK1303.key_x = m_emu.m_angle_unit;
-    cycle();
-    m_IK1302.key_x = 0;
-    m_IK1302.key_y = 0;
 }
 
 void MK61Emu_SetDisplayed(uint32_t value) {
@@ -1336,7 +1392,9 @@ AngleUnit MK61Emu_GetAngleUnit(void) {
     return m_emu.m_angle_unit;
 }
 
-void  class_mk61_core::read_Y(char* buffer, const char* display_symbols) { // считывает в буфер регистра стека
+/*
+
+void  read_Y(char* buffer, const char* display_symbols) { // считывает в буфер регистра стека
   bool lider_zero = true;
   for(int i=580-33+24; i >= 580-33; i-=3) {
     const u8 digit = ringM[i];
@@ -1347,7 +1405,7 @@ void  class_mk61_core::read_Y(char* buffer, const char* display_symbols) { // с
     }
   }
 }
-/*
+
 void    MK61Emu_SetStackStr(StackRegister stack_reg, char sign, char mantissa[8], isize pow) {
   isize addr = (isize) stack_reg;
   if(pow < 0) {
@@ -1494,7 +1552,30 @@ const char* MK61Emu_GetStackStr(StackRegister stack_reg, const char* symbols_set
 }*/
 
 
-bool  class_mk61_core::update_indicator(char* buffer, const char* display_symbols) { // возращает false - есть изменения в дисплейной строке/ true - нет изменений
+//                                           mantisa                   |    pow
+//                                       0   1   2   3   4  5  6  7  8   9  10  11
+static const usize indicator_pos[12] = {24, 21, 18, 15, 12, 9, 6, 3, 0, 33, 30, 27};
+namespace core_61 {
+
+static  usize   backstep_comma_position;
+
+void step(void) {
+    m_IK1303.key_y = 1;
+    m_IK1303.key_x = m_emu.m_angle_unit;
+    ::cycle();
+    m_IK1302.key_x = 0;
+    m_IK1302.key_y = 0;
+}
+
+void enable(void) {
+    MK61Emu_Cleanup();
+    //MK61Emu_SetAngleUnit(RADIAN);
+    core_61::clear_displayed();
+    backstep_comma_position = core_61::comma_position();
+    step();
+}
+
+bool  update_indicator(char* buffer, const char* display_symbols) { // возращает false - есть изменения в дисплейной строке/ true - нет изменений
   const isize  comma_pos = 9 - m_IK1302.comma + 1;
   bool match = true;
 
@@ -1537,6 +1618,7 @@ bool  class_mk61_core::update_indicator(char* buffer, const char* display_symbol
   return match;
 }
 
+}
 //                   1--------12--------23--- 
 //          123456789012345678901234567890123
 //   nReg*42

@@ -385,7 +385,7 @@ void  EditBasic(void) { // Редактирования строки BASIC
           if(line > 0) {
             line--;
             idx = 0;
-          }
+          } 
         break;
       case KEY_LEFT:
           if(idx > 0) idx--;

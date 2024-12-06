@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include "rust_types.h"
 
-//#define DEBUG_CORE61
+//#define DEBUG_CORE61        // Полная отладочная информация по ядру mk61s (почти не слушает клавиатуру)
 //#define DEBUG_MINI          // Отладочная информация по оболочке MK61S-MINI
 //#define DEBUG_SPIFLASH      // Отладочная информация по обработке внешней флеш памяти
 //#define DEBUG_DISASMBLER    // Отладочная информация по встроенному дисассемблеру МК61 инструкций
@@ -14,6 +14,7 @@
 //#define DEBUG_LIBRARY       // Отладочная информация по библиотеке программ МК61
 //#define DEBUG_MK61E         // Отладочная информация расширяющая представление вывода терминала по МК61
 //#define EXPAND_RING_MK61    // Увеличить объем оперативной памяти кольца МК61 на еще один регистр IK130X
+//#define DEBUG_MEASURE       // Вывод времени исполнения от С/П до С/П для вычисления производительности ядра
 //#define MK61_EXTENDED
 //#define B3_34
 #define TERMINAL
@@ -25,8 +26,8 @@
 //#define CDU
 //#define LK432
 //#define SERIAL_OUTPUT
-//#define REVISION_V3
-#define REVISION_V2
+#define REVISION_V3
+//#define REVISION_V2
 #define MK61s
 //#define MK52s
 
@@ -37,6 +38,12 @@
 #if defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
  #define SERIAL_OUTPUT
  //#warning Serial module included!
+#endif
+
+#ifdef DEBUG_MEASURE
+  constexpr bool DBG_MEASURE = true;
+#else
+  constexpr bool DBG_MEASURE = false;
 #endif
 
 #ifdef DEBUG_MINI
