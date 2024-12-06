@@ -51,7 +51,6 @@ const   u8                  NL = 0x0A;
 static  constexpr usize     MAX_INPUT_CHAR = 240;
 
 extern  class_disassm_mk61  disassembler;
-extern  class_mk61_core     mk61s;
 extern  LiquidCrystal       lcd;
 extern  void DFU_enable(void);
 
@@ -257,7 +256,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
         Serial.println((char*) &buffer);
       }
 
-      Serial.print("IP: "); Serial.println(mk61s.get_IP());
+      Serial.print("IP: "); Serial.println(core_61::get_IP());
     }
 
     void Dump1302(void) {
@@ -306,7 +305,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       Serial.print("Z  = "); Serial.println(read_stack_register(stack::Z, cvalue, terminal_symbols)); 
       Serial.print("Y  = "); Serial.println(read_stack_register(stack::Y, cvalue, terminal_symbols)); 
       Serial.print("X  = "); Serial.println(read_stack_register(stack::X, cvalue, terminal_symbols));
-      Serial.print("IP =  "); Serial.println(mk61s.get_IP());
+      Serial.print("IP =  "); Serial.println(core_61::get_IP());
     }
 
     void  echo_ISA_61(void) {
@@ -449,7 +448,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
                 
             const u8 byte_code = (hi_digit << 4) | lo_digit;
             Serial.print(byte_code, HEX); Serial.print(',');
-            MK61Emu_SetCode(mk61s.get_ring_address(linear_addr++), byte_code);
+            MK61Emu_SetCode(core_61::get_ring_address(linear_addr++), byte_code);
           }
     }
 
@@ -495,7 +494,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
                 Serial_writeln_hex(code);
                 if(code != 0xFF) {
                   Serial.println(ptr_input);
-                  MK61Emu_SetCode(mk61s.get_ring_address(AT++), code);
+                  MK61Emu_SetCode(core_61::get_ring_address(AT++), code);
                 }
               } while (*ptr_input++ == ' ');
     }

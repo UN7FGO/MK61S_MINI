@@ -6,7 +6,7 @@ static constexpr int BASIC_MAXIMUM_STRING = 14;
 enum class BASIC_WORD {_PRINT=1, _INPUT, _IF, _THEN, _ELSE, _STOP, _BEGIN, _END};
 
 
-extern bool  BASIC_library_select(void);
+extern bool BASIC_library_select(void);
 extern bool CompileBasic(char* program);
 extern void InitBasic(void);
 extern int  AssignBasic(void);

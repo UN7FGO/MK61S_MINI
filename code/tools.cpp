@@ -15,8 +15,6 @@
 #include "ledcontrol.h"
 using namespace led;
 
-extern class_mk61_core mk61s;
-
 const  class_LCD_Label  DFU_message(0, 0);
 const  class_LCD_Label  STORE_message(0, 0);
 const  class_LCD_Label  STORE_progress_message(0, 1);
@@ -148,7 +146,7 @@ bool load_from(isize address) {
   dbgln(SPIROM, "SPIFLASH: read from address ", address);
 
   for(isize i=0; i<105; i++){
-    MK61Emu_SetCode(mk61s.get_ring_address(i), load_word(address, OFFSET_MK61_PROGRAMM + i));
+    MK61Emu_SetCode(core_61::get_ring_address(i), load_word(address, OFFSET_MK61_PROGRAMM + i));
   }
   return true;
 }
@@ -180,7 +178,7 @@ inline void store_word(isize segment_address, isize offset, u8 data) {
 
 inline bool check_empty_program(void) {
   usize all_to_or = 0;
-  for(isize i=0; i < 105; i++) all_to_or |= (usize) MK61Emu_GetCode(mk61s.get_ring_address(i));
+  for(isize i=0; i < 105; i++) all_to_or |= (usize) MK61Emu_GetCode(/*mk61s.*/core_61::get_ring_address(i));
   if(all_to_or == 0) {
     lcd.print("No program...");
     sound(PIN_BUZZER, 4000, 750);
@@ -258,7 +256,7 @@ bool Store(usize nSlot) {
   dbg(MINI, "Save ");
   store_word(address, OFFSET_FLAG_OCCUPIED, SLOT_OCCUPIED);
   for(isize i = 0; i < 105; i++){
-    const u8 mk61_prg_word = MK61Emu_GetCode(mk61s.get_ring_address(i));
+    const u8 mk61_prg_word = MK61Emu_GetCode(core_61::get_ring_address(i));
     store_word(address, OFFSET_MK61_PROGRAMM + i, mk61_prg_word);
     dbg(MINI, "#");
   }
@@ -302,7 +300,7 @@ bool Store(void) {
 
   store_word(address, OFFSET_FLAG_OCCUPIED, SLOT_OCCUPIED);
   for(isize i = 0; i < 105; i++){
-    const u8 mk61_prg_word = MK61Emu_GetCode(mk61s.get_ring_address(i));
+    const u8 mk61_prg_word = MK61Emu_GetCode(core_61::get_ring_address(i));
     store_word(address, OFFSET_MK61_PROGRAMM + i, mk61_prg_word);
     #ifdef SERIAL_OUTPUT
       Serial.write('#');
