@@ -13,8 +13,9 @@
 //#define DEBUG_BASIC         // Отладочная информация по BASIC
 //#define DEBUG_LIBRARY       // Отладочная информация по библиотеке программ МК61
 //#define DEBUG_MK61E         // Отладочная информация расширяющая представление вывода терминала по МК61
+//#define DEBUG_PARSE         // Отладочная информация по парсеру ассемблера
 //#define EXPAND_RING_MK61    // Увеличить объем оперативной памяти кольца МК61 на еще один регистр IK130X
-//#define DEBUG_MEASURE       // Вывод времени исполнения от С/П до С/П для вычисления производительности ядра
+#define DEBUG_MEASURE       // Вывод времени исполнения от С/П до С/П для вычисления производительности ядра
 //#define MK61_EXTENDED
 //#define B3_34
 #define TERMINAL
@@ -35,9 +36,15 @@
 //defined(__ARM_ARCH_7EM__)
 //defined(__ARM_FEATURE_SIMD32)
 
-#if defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
+#if defined(DEBUG_MEASURE) || defined(DEBUG_PARSE) || defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
  #define SERIAL_OUTPUT
  //#warning Serial module included!
+#endif
+
+#ifdef DEBUG_PARSE
+  constexpr bool DBG_PARSE = true;
+#else
+  constexpr bool DBG_PARSE = false;
 #endif
 
 #ifdef DEBUG_MEASURE

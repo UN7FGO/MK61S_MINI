@@ -91,7 +91,7 @@ call[0],call[1],call[2],call[3],call[4],call[5],call[6],call[7],call[8],call[9],
 sto[0],sto[1],sto[2],sto[3],sto[4],sto[5],sto[6],sto[7],sto[8],sto[9],sto[A],sto[B],sto[C],sto[D],sto[E],?,\
 jme[0],jme[1],jme[2],jme[3],jme[4],jme[5],jme[6],jme[7],jme[8],jme[9],jme[A],jme[B],jme[C],jme[D],jme[E],?,\
 ld[0],ld[1],ld[2],ld[3],ld[4],ld[5],ld[6],ld[7],ld[8],ld[9],ld[A],ld[B],ld[C],ld[D],ld[E],?,\
-jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jnz[B],jnz[C],jnz[D],jnz[E],";
+jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jnz[B],jnz[C],jnz[D],jnz[E]";
 
     isize   AT;
     u32     terminal_last_cmd;
@@ -204,32 +204,36 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       return text;
     }
 
-    i32 get_ISA_61(char*& text) {
-      char* compare;
-      char* pMnemo = (char*) ISA_61;
+    i32 get_ISA_61(char* &text) {
+      char* compare = text;
+      u8 match = 0;
       u8 opcode = 0;
-      u8 match;
+      dbgln(PARSE, (char*) compare);
 
-      do {
-        compare = text;
-        match = 0;
-        while(*pMnemo != ',') { 
-          match |= (*pMnemo++ ^ *compare++);
-          #ifdef DEBUG
-            Serial.write(*pMnemo);
-            Serial.write(*compare);
-          #endif
+      for(char ISA_token_char : ISA_61) {
+
+        if(ISA_token_char == ',') { // токен из списка команд выбран до завершения ','
+          if(match != 0) { // сравнение было прервано ранее
+            dbgln(PARSE, "Partial compare, next...! opcode = ", opcode);
+            compare = text; match = 0; // начальные установкии для нового поиска
+            opcode++; // начнем сравнениие с следующим токеном из списка команд
+          } else { // сравнение было удачным 
+            if(*compare == ' ' || *compare == 0) { // при этом поисковый токен выбран до ' ' или 0
+              dbgln(PARSE, "Success compare! opcode = ", opcode);
+              text = compare;
+              return opcode;
+            } else { // поисковый токен не завершен, а командный завершен
+              dbgln(PARSE, "Partial compare, next...! opcode = ", opcode);
+              compare = text; match = 0; // начальные установкии для нового поиска
+              opcode++; // начнем сравнениие с следующим токеном из списка команд
+            }
+          }
+        } else {
+          match |= (ISA_token_char ^ *compare++);  // проверяем символ очередного токена из списка команд и очередного символа искомого токена
         }
-        #ifdef DEBUG
-          Serial.println(match);
-        #endif
-        if(match == 0 && *compare == ' ') {
-          text = compare;
-          return opcode;
-        } 
-        opcode++;
-      } while (*++pMnemo != 0);
+      }
 
+      dbgln(PARSE, "Fail compare!", opcode);
       return -1;
     }
 
@@ -471,31 +475,33 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
 
     void  Assembler(void) {
               char* ptr_input = (char*) &input_buffer[4];
-              const u32 word = *(u32*)(ptr_input) - 0x30303030;
-              if((word & 0x000F) <= 0x9 && (word & 0x00F0) <= 0x90 && (word & 0x0F00) <= 0x900 && (word & 0xF000) <= 0x9000) {
+              const u32 newTA = *((u32*) &input_buffer[4]);
+              const u32 word  = newTA - 0x30303030;
+              
+              dbghexln(PARSE, "newTA as u32 ", newTA);
+              dbghexln(PARSE, "digit0 ", word & 0x000000FF, " digit1 ", word & 0x0000FF00, " digit2 ", word & 0x00FF0000, " digit3 ", word & 0xFF000000);
+
+              Serial.print("Assembled to mk61 ");
+
+              if((word & 0x000000FF) <= 0x09 && (word & 0x0000FF00) <= 0x00000900 && (word & 0x00FF0000) <= 0x00090000 && (word & 0xFF000000) <= 0x09000000) {
                 AT = parse_addr((u8*) ptr_input);
-                ptr_input += 4;
+                //0 1 2 3 4 5 6 7 8 9
+                //a s m _ 0 0 0 0 _ ?
+                ptr_input += 5;
+                Serial.print(" from new TA ("); Serial.print(AT); Serial.println(") ");
               }
+
               do {
-                u8 code = 0;
+                Serial.print("Parsing: "); Serial.println(ptr_input);
+                const isize code = get_ISA_61(ptr_input);
 
-                if(IsDecimalDigit(*ptr_input)) {
-                  do {
-                    code *= 10;
-                    code += *ptr_input - '0';
-                  } while(IsDecimalDigit(*++ptr_input));
-                } else {
-                  code = get_ISA_61(ptr_input);
-                }  
-
-                Serial.print("TA = ");
-                Serial.print(AT);
-                Serial.print(" : ");
-                Serial_writeln_hex(code);
-                if(code != 0xFF) {
-                  Serial.println(ptr_input);
-                  MK61Emu_SetCode(core_61::get_ring_address(AT++), code);
+                if(code == -1) {
+                  Serial.print("Unexpected token: "); Serial.println(ptr_input);
+                  return;
                 }
+
+                Serial.print("TA = "); Serial.print(AT); Serial.print(" : "); Serial_writeln_hex((u8) code);
+                MK61Emu_SetCode(core_61::get_ring_address(AT++), (u8) code);
               } while (*ptr_input++ == ' ');
     }
 
