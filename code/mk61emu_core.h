@@ -1,4 +1,4 @@
-/* 
+﻿/* 
  * This file is part of the MK61S distribution (https://gitlab.com/vitasam/mk61s).
  * Copyright (c) 2020- vitasam.
  * 
@@ -116,6 +116,7 @@ typedef char mk61_register_position_t;
 
 typedef mk61_register_position_t mk61_register_t[MK61_REGISTER_POSITIONS_COUNT];
 
+/*
 typedef struct { // Структура микросхемы К145IИК302 
     uint32_t AMK;
 
@@ -132,6 +133,59 @@ typedef struct { // Структура микросхемы К145IИК302
     uint8_t*  pM;
 }  IK1302;
 
+typedef struct { // Структура микросхемы К145IИК303 
+    uint8_t *pM;
+    uint8_t R[IK13_MTICK_COUNT];
+    uint8_t ST[IK13_MTICK_COUNT];
+
+    io_t AMK, MOD;
+    io_t S, S1, L, T, P;
+
+    //uint16_t uI_hi;     // Instruction HI word
+    uint8_t  flag_FC;
+    uint8_t *pAND_AMK;  // Precalc offset from microprograms for signal_I 0..26
+    uint8_t *pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
+    uint16_t key_x, key_xm, key_y, comma;
+}  IK1303;
+
+typedef struct { // Структура микросхемы К145IИК306 
+    //uint16_t uI_hi;  // Instruction HI word
+    uint32_t AMK;
+
+    uint32_t  L, S, S1, P, T, MOD, flag_FC;
+
+    uint8_t   R[IK13_MTICK_COUNT];
+    uint8_t   ST[IK13_MTICK_COUNT];
+
+    uint8_t*  pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
+    uint8_t*  pAND_AMK;
+    uint8_t*  pM;
+}  IK1306;
+*/
+
+typedef struct { // Структура микросхемы К145IИК130x
+    uint32_t AMK;	//	0..67
+    uint8_t  R [IK13_MTICK_COUNT];
+    uint8_t  ST[IK13_MTICK_COUNT];
+
+	uint32_t S, S1, MOD, flag_FC;
+	uint32_t L,T,P; //	0/1
+/*	struct {
+		uint32_t L:1; //	
+		uint32_t T:1; //	
+		uint32_t P:1; //	
+	};	//bits	*/
+
+    uint8_t* pAND_AMK1;		// Precalc offset from microprograms for signal_I 27..35
+    uint8_t* pAND_AMK;		// Precalc offset from microprograms for signal_I 0..26
+    uint8_t* pM;
+
+    uint32_t key_y, key_x, key_xm, comma;
+    uint32_t displayed;
+}IK130x_t;
+
+typedef IK130x_t IK1302;	//FIXME: delete me
+
 /**
  * @brief The MK61 emulator object
  */
@@ -143,7 +197,7 @@ typedef struct {
     AngleUnit m_angle_unit;
 } MK61Emu;
 
-extern  IK1302  m_IK1302;
+extern  IK130x_t	m_IK1302;
 extern  u8      ringM[SIZE_RING_M];
 
 namespace core_61 {
