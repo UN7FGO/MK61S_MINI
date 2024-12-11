@@ -6,8 +6,6 @@
 #include  "cross_hal.h"
 #include "debug.h"
 
-extern  class_mk61_core    mk61s;
-
 static  i8          selProgram, selGame;
 
 static const u32 Factorial_size       = 1 + 8 + 1;
@@ -255,7 +253,7 @@ void  load_from(usize offs, /*TPunct* list,*/ u8* data_stream) {
   const u32 code_len = data_stream[offs++];
   for(u32 addr=0; addr < 105; addr++) {
       const u8 store_data = (addr < code_len)? data_stream[offs++] : 0;
-      MK61Emu_SetCode(mk61s.get_ring_address(addr), store_data);
+      MK61Emu_SetCode(core_61::get_ring_address(addr), store_data);
   }
 
   u8* pPack_number = &data_stream[offs];

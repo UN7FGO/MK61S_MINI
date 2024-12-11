@@ -1,4 +1,4 @@
-/* 
+﻿/* 
  * This file is part of the MK61S distribution (https://gitlab.com/vitasam/mk61s).
  * Copyright (c) 2020- vitasam.
  * 
@@ -43,8 +43,6 @@
   static constexpr  usize   OFFSET_IK1303 = 252 + 42 + 42;
   static constexpr  usize   OFFSET_IK1306 = 252 + 42 + 42 + 42;
 #endif
-
-extern uint8_t ringM[SIZE_RING_M];
 
 namespace ring_M {
   struct  K745 {
@@ -118,27 +116,8 @@ typedef char mk61_register_position_t;
 
 typedef mk61_register_position_t mk61_register_t[MK61_REGISTER_POSITIONS_COUNT];
 
-typedef struct
-{
-    microinstruction_t microinstructions[68]; // микрокоманды
-    instruction_t instructions[256];     // команды
-    //uint8_t microprograms[1152];   // микропрограммы (синхропрограммы - последовательности микрокоманд)
-} IK13_ROM;
-
-/**
- * mk61ROM
- */
-typedef struct
-{
-    IK13_ROM IK1302;
-    IK13_ROM IK1303;
-    IK13_ROM IK1306;
-} mk61ROM_t;
-
-/**
- * IK13
- */
-typedef struct{
+/*
+typedef struct { // Структура микросхемы К145IИК302 
     uint32_t AMK;
 
     uint32_t  key_y, key_x, key_xm;
@@ -154,7 +133,7 @@ typedef struct{
     uint8_t*  pM;
 }  IK1302;
 
-typedef struct{
+typedef struct { // Структура микросхемы К145IИК303 
     uint8_t *pM;
     uint8_t R[IK13_MTICK_COUNT];
     uint8_t ST[IK13_MTICK_COUNT];
@@ -162,15 +141,15 @@ typedef struct{
     io_t AMK, MOD;
     io_t S, S1, L, T, P;
 
-    uint16_t uI_hi;     // Instruction HI word
+    //uint16_t uI_hi;     // Instruction HI word
     uint8_t  flag_FC;
     uint8_t *pAND_AMK;  // Precalc offset from microprograms for signal_I 0..26
     uint8_t *pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
     uint16_t key_x, key_xm, key_y, comma;
 }  IK1303;
 
-typedef struct{
-    uint16_t uI_hi;  // Instruction HI word
+typedef struct { // Структура микросхемы К145IИК306 
+    //uint16_t uI_hi;  // Instruction HI word
     uint32_t AMK;
 
     uint32_t  L, S, S1, P, T, MOD, flag_FC;
@@ -182,102 +161,69 @@ typedef struct{
     uint8_t*  pAND_AMK;
     uint8_t*  pM;
 }  IK1306;
+*/
+
+typedef struct { // Структура микросхемы К145IИК130x
+    uint32_t AMK;	//	0..67
+    uint8_t  R [IK13_MTICK_COUNT];
+    uint8_t  ST[IK13_MTICK_COUNT];
+
+	uint32_t S, S1, MOD, flag_FC;
+	uint32_t L,T,P; //	0/1
+/*	struct {
+		uint32_t L:1; //	
+		uint32_t T:1; //	
+		uint32_t P:1; //	
+	};	//bits	*/
+
+    uint8_t* pAND_AMK1;		// Precalc offset from microprograms for signal_I 27..35
+    uint8_t* pAND_AMK;		// Precalc offset from microprograms for signal_I 0..26
+    uint8_t* pM;
+
+    uint32_t key_y, key_x, key_xm, comma;
+    uint32_t displayed;
+}IK130x_t;
+
+typedef IK130x_t IK1302;	//FIXME: delete me
 
 /**
  * @brief The MK61 emulator object
  */
 #define INDICATOR_STRING_LENGTH				15
-typedef struct{
+typedef struct {
     char m_indicator_str[INDICATOR_STRING_LENGTH];
     char m_stack_y_str[INDICATOR_STRING_LENGTH];
     char m_stack_z_str[INDICATOR_STRING_LENGTH];
     AngleUnit m_angle_unit;
 } MK61Emu;
 
-extern IK1302 m_IK1302;
+extern  IK130x_t	m_IK1302;
+extern  u8      ringM[SIZE_RING_M];
 
-class class_mk61_core {
-  private:
-    //                                mantisa                     |    pow
-    //                              0   1   2   3   4  5  6  7  8,  9, 10, 11
-    const usize indicator_pos[12] = {24, 21, 18, 15, 12, 9, 6, 3, 0, 33, 30, 27};
-    u32    backstep_comma_position;
-  public:
-    const int reg_Y_pow         = 580;
-    void  enable();
-    void  cycle(void);
-    void  step(void);
+namespace core_61 {
+  
+  inline    isize get_ring_address(isize linear_address) {
+    const isize cycle_x = ((linear_address % 7) == 0)?  linear_address : (linear_address - 7);
+    return 41 + cycle_x * 6;
+  }
 
-    int get_ring_address(int linear_address) const {
-      const int cycle_x = ((linear_address % 7) == 0)?  linear_address : (linear_address - 7);
-      return 41 + cycle_x * 6;
-    }
+  inline    void  clear_displayed(void) { m_IK1302.displayed = 0; }
 
-    void set_code(int linear_address, u8 data) {
-      const int ring_address = get_ring_address(linear_address);
-      ringM[ring_address] = data >> 4;
-      ringM[ring_address - 3] = data & 0x0F;
-    }
+  inline    u8    get_IPH(void)         { return  m_IK1302.R[34] & 0xF; }
+  inline    u8    get_IPL(void)         { return  m_IK1302.R[31] & 0xF; }
+  inline    u8    get_IP (void)         { return  get_IPH()*10 + get_IPL(); }
 
-    u8  get_code(int linear_address){
-      const int ring_address = get_ring_address(linear_address);
-      return (ringM[ring_address]<<4)|(ringM[ring_address-3]);
-    }
+  inline    bool  is_displayed(void)    { return (m_IK1302.displayed != 0); }
+  inline    usize comma_position(void)  { return m_IK1302.comma; }
 
-    u8 get_IP(void) const {
-      return  get_IPH()*10 + get_IPL();
-    }
+  extern    void  enable(void);
+  extern    void  step(void);
 
-    u8 get_IPH(void) const {
-      return  m_IK1302.R[34] & 0xF;
-    }
-
-    u8 get_IPL(void) const {
-      return  m_IK1302.R[31] & 0xF;
-    }
-
-    void clear_displayed(void) {m_IK1302.displayed = 0;}
-
-    bool is_displayed(void) const {
-      return (m_IK1302.displayed != 0);
-    }
-
-    uint32_t get_comma_position(void) const {
-      return m_IK1302.comma;
-    }
-
-    void  read_indicator(char* buffer, const char* display_symbols) { // считывает в буфер содержимое дисплея МК61
-      const int comma_pos = 9 - m_IK1302.comma + 1;
-
-        for(int i=0; i<12; i++) {
-          if(i == comma_pos) *buffer++ = '.';
-          *buffer++ = display_symbols[ m_IK1302.R[ indicator_pos[i] ] ];
-        }
-
-      *buffer = 0;
-    }
-
-    //      mantisa                     |    pow
-    //  0   1   2   3   4  5  6  7  8,  9, 10, 11
-    //{24, 21, 18, 15, 12, 9, 6, 3, 0, 33, 30, 27};
-    u8  byte_from_R(const usize nR, usize номер_пары) {
-      if(номер_пары < 4) {
-        const usize pair_offset = (nR * 42) + 21 - 6 * номер_пары; // позиция первой тетрады пары определяется по формуле offset = 21 - 6 * номер_пары
-        return ((ringM[pair_offset] * 10) + ringM[pair_offset - 3]);
-      } else {
-        const usize pair_offset = (nR * 42) + 30; 
-        return ((ringM[pair_offset] * 10) + ringM[pair_offset - 3]);
-      }
-    }
-
-
-    void  read_Y(char* buffer, const char* display_symbols);
-
-    // возращает false - есть изменения в дисплейной строке/ true - нет изменений
-    //  - дисплейный буфер buffer обновляется только измененным содержимым
-    //  - display_symbols - массив набор символов замены знаков индикатора 
-    bool  update_indicator(char* buffer, const char* display_symbols);
-};
+  // возращает false - есть изменения в дисплейной строке/ true - нет изменений
+  //  - дисплейный буфер buffer обновляется только измененным содержимым
+  //  - display_symbols - массив набор символов замены знаков индикатора 
+  extern    bool  update_indicator(char* buffer, const char* display_symbols);
+}
 
 /*
 #ifdef __cplusplus

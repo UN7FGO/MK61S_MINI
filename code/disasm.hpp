@@ -8,7 +8,6 @@
 #include "tools.hpp"
 #include "debug.h"
 
-extern  class_mk61_core     mk61s;
 extern  class_calc_config   config;
 
 const int LEN_DISASM_LINE = 5;
@@ -98,7 +97,7 @@ class class_disassm_mk61 {
 
     inline bool is_update(char* buffer) {
       if(lcd_enable) {
-        const u8 IP_mk61 = mk61s.get_IP(); //MK61Emu_get_IP();
+        const u8 IP_mk61 = core_61::get_IP(); //MK61Emu_get_IP();
 
         if(IP_mk61 != cache_IP_mk61) { // счетчик команд изменился
           if(config.output_IP) {
@@ -112,9 +111,9 @@ class class_disassm_mk61 {
           // дизассемблируем с адреса IP_mk61     DISP [___ ___ ___]
           const u8 addr = IP_mk61 - 1;
           if(addr < 0xC3) { // до адреса 0xC3
-            const u8 code = MK61Emu_GetCode(mk61s.get_ring_address(addr));
+            const u8 code = MK61Emu_GetCode(core_61::get_ring_address(addr));
             #ifdef DEBUG_DISASMBLER
-              Serial.print("mk61 IP "); Serial.print(mk61s.get_IPH()); Serial.print(':'); Serial.print(mk61s.get_IPL());
+              Serial.print("mk61 IP "); Serial.print(mk61s.get_IPH()); Serial.write(':'); Serial.print(mk61s.get_IPL());
               Serial.print(" linear address $"); Serial.print(addr); Serial.print(" code "); Serial.println(code, HEX);
             #endif
             if(code <= 9) {
@@ -203,7 +202,7 @@ class class_disassm_mk61 {
     void  enable(void) {
       dbgln(DISASM, "disassembler ON!")
       lcd_enable = true;
-      cache_IP_mk61 = mk61s.get_IP() + 1;
+      cache_IP_mk61 = core_61::get_IP() + 1;
       print();
     }
 

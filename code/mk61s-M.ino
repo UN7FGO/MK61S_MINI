@@ -1,4 +1,4 @@
-#include "config.h"
+﻿#include "config.h"
 
 static  class_calc_config   config;
 
@@ -13,8 +13,6 @@ using namespace kbd;
 #include "mnemo.hpp"
 
 #include "mk61emu_core.h"
-
-static  class_mk61_core    mk61s;
 
 #include "cross_hal.h"
 #include "disasm.hpp"
@@ -86,7 +84,7 @@ void lcd_std_display_redraw(void) { // Принудительная отрисо
 
 void mk61_display_refresh(void) {
   // Обновление дисплея МК61, если изменилась информация на экране
-    if(!mk61s.update_indicator(&display_text[0], display_symbols)) { 
+    if(!core_61::update_indicator(&display_text[0], display_symbols)) { 
       XLabel.print(display_text);
       dbgln(MINI, "[mk61_display_refresh] ", display_text);
     }
@@ -181,7 +179,7 @@ void setup() {
   mk61_quants_reload  =   1;
   mk61_quants         =   mk61_quants_reload;
 
-  mk61s.enable();
+  core_61::enable();
   memset(&mk61_go_basic, 0xFF, sizeof(mk61_go_basic));
   InitBasic();
   BASIC_mode = false;
@@ -237,7 +235,7 @@ void key_press_handler(i32 keycode) {
 }
 
 void  check_and_start_basic(void) {
-  const int mk61_IP = mk61s.get_IP();
+  const int mk61_IP = core_61::get_IP();
   const int BasicN  = mk61_go_basic[mk61_IP];
 
   dbgln(BASIC, "Read binding from MK61 step N ", mk61_IP, " assign BASIC program N ", BasicN); 
@@ -255,6 +253,12 @@ static constexpr usize ms_STOP_SIGNAL  =   850;  // ms
 /* СОБЫТИЯ автомата конечных состояний МК-61 */
 inline void  event_stop_in_prg_mk61(void) {
   runtime_ms = millis() - runtime_ms;
+  // Для измерений производительности 
+  #ifdef DEBUG_MEASURE
+    char mk61_display[14];
+    core_61::update_indicator(&mk61_display[0], display_symbols);
+    dbgln(MEASURE, "time elapsed (ms): ", runtime_ms, " : ", mk61_display);
+  #endif
 
   dbgln(MINI, "PRG: STOP dt = ", runtime_ms, " mk61_reload_quant = ", mk61_quants_reload);
 
@@ -297,20 +301,20 @@ inline void mk61_automate(void) {
       keycode = kbd::get_key(PRESS);
       if(keycode >= 0) {
         key_press_handler(keycode);
-        mk61s.step();
+        core_61::step();
       }
 
       core_stage = NEXT;
       break;
     case  NEXT:
-      mk61s.step();
-      const bool comma_in_11 = (mk61s.get_comma_position() == 11);
+      core_61::step();
+      const bool comma_in_11 = (core_61::comma_position() == 11);
 
       if(exeq == 0) { // MK61 в режиме вычислений
         if(comma_in_11) { // MK61 был первый шаг по программе старт с С/П
           event_start_prg_mk61();
         } else { 
-          if(mk61s.is_displayed()) core_stage = START;
+          if(core_61::is_displayed()) core_stage = START;
         }
       } else { // MK61 в режиме работы по программме 
         dbgln(MINI, "PRG: next steps");
@@ -338,8 +342,8 @@ inline void monitor_switch_angle_unit(t_time_ms now) {
 
 inline void mk61_process(void) {
   mk61_automate();
-  if(mk61s.is_displayed()) {
-      mk61s.clear_displayed();
+  if(core_61::is_displayed()) {
+      core_61::clear_displayed();
       if(!lcd_hooked) mk61_display_refresh();
   }
 }
