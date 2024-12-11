@@ -59,6 +59,10 @@ static  bool        need_draw_lock_message;
   static  class_terminal      terminal;
 #endif
 
+const char terminal_symbols[16] = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'L', 'C', '\303', 'E', ' '
+};
+
 const char display_symbols[16] = {
     'O', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'L', 'C', G_RUS, 'E', ' '
 };
@@ -256,7 +260,7 @@ inline void  event_stop_in_prg_mk61(void) {
   // Для измерений производительности 
   #ifdef DEBUG_MEASURE
     char mk61_display[14];
-    core_61::update_indicator(&mk61_display[0], display_symbols);
+    core_61::update_indicator(&mk61_display[0], terminal_symbols);
     dbgln(MEASURE, "time elapsed (ms): ", runtime_ms, " : ", mk61_display);
   #endif
 

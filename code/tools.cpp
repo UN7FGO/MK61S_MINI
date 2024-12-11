@@ -80,8 +80,9 @@ usize seek_program_END(u8* code_page) {
   while (code_page[lastCommand] == 0) {
     lastCommand--;
   }
-  lastCommand++;
-  lastCommand++;
+
+  if(lastCommand < 105) lastCommand++;
+  if(lastCommand < 105) lastCommand++;
 
   return lastCommand;
 }

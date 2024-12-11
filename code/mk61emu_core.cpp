@@ -39,23 +39,20 @@ typedef struct { // ПЗУ микрокода, микропрограмм для
 } mk61ROM_t;
 
 typedef struct { // Структура микросхемы К145IИК303 
-    uint8_t *pM;
-    uint8_t R[IK13_MTICK_COUNT];
-    uint8_t ST[IK13_MTICK_COUNT];
+    uint8_t   *pM;
+    uint8_t   R[IK13_MTICK_COUNT];
+    uint8_t   ST[IK13_MTICK_COUNT];
 
-    io_t AMK, MOD;
-    io_t S, S1, L, T, P;
+    io_t      AMK, MOD;
+    io_t      S, S1, L, T, P, flag_FC;
 
-    //uint16_t uI_hi;     // Instruction HI word
-    uint8_t  flag_FC;
-    uint8_t *pAND_AMK;  // Precalc offset from microprograms for signal_I 0..26
-    uint8_t *pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
-    uint16_t key_x, key_xm, key_y, comma;
+    uint8_t   *pAND_AMK;  // Precalc offset from microprograms for signal_I 0..26
+    uint8_t   *pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
+    uint16_t  key_x, key_xm, key_y, comma;
 }  IK1303;
 
 typedef struct { // Структура микросхемы К145IИК306 
-    //uint16_t uI_hi;  // Instruction HI word
-    uint32_t AMK;
+    uint32_t  AMK;
 
     uint32_t  L, S, S1, P, T, MOD, flag_FC;
 
@@ -68,13 +65,8 @@ typedef struct { // Структура микросхемы К145IИК306
 }  IK1306;
 
 void IK1302_Tick(mtick_t signal_I, usize J_signal_I);
-void IK1302_Clear(void);
-
 void IK1303_Tick(mtick_t signal_I, usize J_signal_I);
-void IK1303_Clear(void);
-
 void IK1306_Tick(mtick_t signal_I, usize J_signal_I);
-void IK1306_Clear(void);
 
 /* Кольцо ДОЗУ - последовательно соединенная память комплектов микросхем К145ИК(02,03,06) в МК61 */
 u8 ringM[SIZE_RING_M/*252+252+42+42+42+42*/];
@@ -118,7 +110,8 @@ static std::array<uint8_t, 256> __attribute__ ((aligned (16))) mod42_table = [](
   return _;
 }();
 */
-static u8 __attribute__ ((aligned (16))) mod42_table[42+41];
+static  constexpr usize MOD42_TABLE_SIZE = 42 + 41;
+static  u8  __attribute__((aligned (16))) mod42_table[MOD42_TABLE_SIZE];
 
 #define DIV3(v)         (((v)*171)>>9)  //(div3_table[v]) 
 //#define DIV3(v)       (((v)*171)>>9)
@@ -409,9 +402,8 @@ const uint8_t* IK1302_M_START = &ringM[OFFSET_IK1302/*252+42+42*/];
 const uint8_t* IK1303_M_START = &ringM[OFFSET_IK1303/*252+42+42+42*/];
 const uint8_t* IK1306_M_START = &ringM[OFFSET_IK1306/*252+42+42+42+42*/];
 
-IK1302 m_IK1302;
-//uint16_t IK1302_uI_hi;         // Instruction HI word
-IK1303 m_IK1303;
+IK1302  m_IK1302;
+IK1303  m_IK1303;
 
 static const uint8_t IK1302_DCW[68] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -740,62 +732,64 @@ void dumpm(uint16_t sig, uint16_t cyc) {
 }
 #endif
 
-inline usize IK1302_GoZero(void) {
+inline  usize __attribute__((always_inline))  IK1302_GoZero(void) {
     uint32_t uI = ROM.IK1302.instructions[(uint16_t)m_IK1302.R[36] + 16 * (uint16_t)m_IK1302.R[39]];
-    const usize IK1302_uI_hi = uI >> 16;
+    const usize uI_hi = uI >> 16;
 
 
     m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[MUL9((uint8_t) uI)];
     m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[MUL9((((uint16_t) uI) >> 8))];
 
     m_IK1302.MOD = (uint8_t) (uI >> 24);
-    m_IK1302.flag_FC = IK1302_uI_hi & 0x00FC;
+    m_IK1302.flag_FC = uI_hi & 0x000000FC;
     if (m_IK1302.flag_FC== 0) m_IK1302.T = 0;
 
     m_IK1302.key_xm = m_IK1302.key_x - 1;
   
-  return IK1302_uI_hi;
+  return uI_hi & 0xFF;
 }
 
-inline usize IK1303_GoZero(void) {
+inline  usize __attribute__((always_inline))  IK1303_GoZero(void) {
     uint32_t uI = ROM.IK1303.instructions[(uint16_t)m_IK1303.R[36] + 16 * (uint16_t)m_IK1303.R[39]];
-    const usize IK1303_uI_hi = uI >> 16;
+    const usize uI_hi = uI >> 16;
 
     m_IK1303.pAND_AMK = (uint8_t*) &IK1303_AND_AMK[ MUL9((uint8_t) uI) ];
     m_IK1303.pAND_AMK1 = (uint8_t*) &IK1303_AND_AMK[ MUL9((((uint16_t) uI) >> 8)) ];
 
     m_IK1303.MOD = (uint8_t) (uI >> 24);
-    m_IK1303.flag_FC = IK1303_uI_hi & 0x00FC;
+    m_IK1303.flag_FC = uI_hi & 0x000000FC;
     if (m_IK1303.flag_FC == 0) m_IK1303.T = 0;
 
     m_IK1303.key_xm = m_IK1303.key_x - 1;
   
-  return IK1303_uI_hi;
+  return uI_hi & 0xFF;
 }
 
-inline usize IK1306_GoZero(void) {
+inline  usize __attribute__((always_inline))  IK1306_GoZero(void) {
     uint32_t uI = ROM.IK1306.instructions[m_IK1306.R[36] + 16 * m_IK1306.R[39]];
-    const usize IK1306_uI_hi = uI >> 16;
+    const usize uI_hi = uI >> 16;
 
     m_IK1306.pAND_AMK = (uint8_t*) &IK1306_AND_AMK[MUL9((uint8_t) uI)];
     m_IK1306.pAND_AMK1 = (uint8_t*) &IK1306_AND_AMK[MUL9((((uint16_t) uI) >> 8))];
 
     m_IK1306.MOD = (uint8_t) (uI >> 24);
 
-  return IK1306_uI_hi;
+  return uI_hi & 0xFF;
 }
 
-void cycle(void) {
+void  cycle(void) {
   mtick_t signal_I;
   const int MAX_CYCLE = (sergey_anvarov_hack_enable)? 280 : 560;
   for (int count = 1; count <= MAX_CYCLE; count++){
       signal_I = 0;
 
-      const u8 IK1302_uI_hi = (u8) IK1302_GoZero();
-      const u8 IK1303_uI_hi = (u8) IK1303_GoZero();
-      const u8 IK1306_uI_hi = (u8) IK1306_GoZero();
+      const usize IK1302_uI_hi = IK1302_GoZero();
 
-      dbghexln(CORE61, "IK1302.IP = 0x", (u16) m_IK1302.R[36] + 16 * (u16) m_IK1302.R[39]);
+      dbgtrace(CORE61, "IK1302.IP = 0x", m_IK1302.R[39]*16 + m_IK1302.R[36]);
+
+      const usize IK1303_uI_hi = IK1303_GoZero();
+      const usize IK1306_uI_hi = IK1306_GoZero();
+
 
       #ifdef out_dump
       dumpm(signal_I, count);
@@ -824,8 +818,8 @@ void cycle(void) {
 
       if (IK1303_uI_hi > 0x1f)
       {
-          m_IK1303.R[37] = (IK1303_uI_hi) & 0xf;   // signal == 36
-          m_IK1303.R[40] = (IK1303_uI_hi) >> 4;    // signal == 36
+          m_IK1303.R[37] = IK1303_uI_hi & 0xf;   // signal == 36
+          m_IK1303.R[40] = IK1303_uI_hi >> 4;    // signal == 36
           m_IK1303.pAND_AMK  = (uint8_t*) &IK1303_AND_AMK[0x5f * 9];
       }
       else{
@@ -834,8 +828,8 @@ void cycle(void) {
 
       if (IK1306_uI_hi > 0x1f)
       {
-          m_IK1306.R[37] = (IK1306_uI_hi) & 0xf;   // signal == 36
-          m_IK1306.R[40] = (IK1306_uI_hi) >> 4;    // signal == 36
+          m_IK1306.R[37] = IK1306_uI_hi & 0xf;   // signal == 36
+          m_IK1306.R[40] = IK1306_uI_hi >> 4;    // signal == 36
           m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[0x5f * 9];
       }
       else{
@@ -867,13 +861,8 @@ void cycle(void) {
 #endif
 }
 
-void IK1302_Tick(mtick_t signal_I, usize J_signal_I)
-{
- uint32_t  microinstruction;
- uint32_t  val, tmp;
- uint32_t  mi_hi;
-
-// Вывод дампа отладочной информации 
+inline void __attribute__((always_inline))  dump_1302(mtick_t signal_I, usize J_signal_I) {
+  // Вывод дампа отладочной информации 
   dbg(CORE61, "I:", signal_I, " J:",  J_signal_I, " 1302.R[");
   for(u8 R : m_IK1302.R) dbghex(CORE61, ".", R);
   dbg(CORE61, "]\n 1302.ST[");
@@ -887,7 +876,13 @@ void IK1302_Tick(mtick_t signal_I, usize J_signal_I)
   dbghex(CORE61, ":T ", m_IK1302.T);
   dbghex(CORE61, ":MOD ", m_IK1302.MOD);
   dbghexln(CORE61, ":flag_FC ", m_IK1302.flag_FC);
+}
 
+void IK1302_Tick(mtick_t signal_I, usize J_signal_I)
+{
+ uint32_t  microinstruction;
+ uint32_t  val, tmp;
+ uint32_t  mi_hi;
 
     tmp = (uint8_t) m_IK1302.pAND_AMK[J_signal_I];
     if (tmp > 59 && m_IK1302.L == 0){ // Если AMK больше 59 (60,61,62,63), то пересчитываются (60,62,64,66) или (61,63,65,67) при L=0
@@ -978,7 +973,6 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
         if(tmp != 0){
           switch (tmp) {
             case 1: 
-                dbgln(CORE61, "R[", signal_I, "] = R[", MOD42(signal_I + 3));
                 m_IK1302.R[signal_I] = m_IK1302.R[MOD42(signal_I + 3)]; 
               break;
             case 2: m_IK1302.R[signal_I] = sigma; break;
@@ -1027,47 +1021,7 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
     }
 }
 
-//uint8_t IK1302_DCWA[68];
-void IK1302_Clear(void) {
-    m_IK1302.pM = (uint8_t*) IK1302_M_START;
-    memset(m_IK1302.R, 0, sizeof(m_IK1302.R));
-    memset(m_IK1302.ST, 0, sizeof(m_IK1302.ST));
-    m_IK1302.AMK = 0;
-    m_IK1302.key_y = 0;
-    m_IK1302.key_x = 0;
-    m_IK1302.comma = 0;
-    m_IK1302.S = 0;
-    m_IK1302.S1 = 0;
-    m_IK1302.L = 0;
-
-    m_IK1302.T = 0;
-    m_IK1302.P = 0;
-    m_IK1302.MOD = 0;
-    m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[0];
-    m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[0];
-}
-
-void IK1303_Clear(void)
-{
-    m_IK1303.pM = (uint8_t*)IK1303_M_START;
-    memset(m_IK1303.R, 0, sizeof(m_IK1303.R));
-    memset(m_IK1303.ST, 0, sizeof(m_IK1303.ST));
-    m_IK1303.S = 0;
-    m_IK1303.S1 = 0;
-    m_IK1303.L = 0;
-    m_IK1303.P = 0;
-    m_IK1303.T = 0;
-    m_IK1303.key_x = 0;
-    m_IK1303.key_y = 0;
-    m_IK1303.comma = 0;
-    m_IK1303.AMK = 0;
-    m_IK1303.MOD = 0;
-    m_IK1303.pAND_AMK   = (uint8_t*) &IK1303_AND_AMK[0];
-    m_IK1303.pAND_AMK1  = (uint8_t*) &IK1303_AND_AMK[0];
-}
-
-void IK1303_Tick(mtick_t signal_I, usize J_signal_I)
-{
+void IK1303_Tick(mtick_t signal_I, usize J_signal_I) {
  uint32_t tmp;
  uint32_t microinstruction;
  uint32_t mi_hi;
@@ -1218,23 +1172,7 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
     }
 }
 
-void IK1306_Clear(void)
-{
-    m_IK1306.pM = (uint8_t*)IK1306_M_START;
-    memset(m_IK1306.R, 0, sizeof(m_IK1306.R));
-    memset(m_IK1306.ST, 0, sizeof(m_IK1306.ST));
-    m_IK1306.S = 0;
-    m_IK1306.S1 = 0;
-    m_IK1306.L = 0;
-    m_IK1306.P = 0;
-    m_IK1306.AMK = 0;
-    m_IK1306.MOD = 0;
-    m_IK1306.pAND_AMK   = (uint8_t*) &IK1306_AND_AMK[0];
-    m_IK1306.pAND_AMK1  = (uint8_t*) &IK1306_AND_AMK[0];
-}
-
-void IK1306_Tick(mtick_t signal_I, usize J_signal_I)
-{
+void IK1306_Tick(mtick_t signal_I, usize J_signal_I) {
     uint32_t tmp, mi_hi;
     uint32_t microinstruction;
 
@@ -1352,8 +1290,36 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
  * mk61emu
  */
 
+//uint8_t IK1302_DCWA[68];
+inline  void  __attribute__((always_inline))  IK1302_Clear(void) {
+    const usize size_IK1302 = sizeof(m_IK1302);
+    dbgln(CORE61, "cleared IK1302 size = ", size_IK1302);
+    memset(&m_IK1302, 0, size_IK1302);
+    m_IK1302.pM = (uint8_t*) IK1302_M_START;
+    m_IK1302.pAND_AMK = (uint8_t*) &IK1302_AND_AMK[0];
+    m_IK1302.pAND_AMK1 = (uint8_t*) &IK1302_AND_AMK[0];
+}
+
+inline  void  __attribute__((always_inline))  IK1303_Clear(void) {
+    const usize size_IK1303 = sizeof(m_IK1303);
+    dbgln(CORE61, "cleared IK1303 size = ", size_IK1303);
+    memset(&m_IK1303, 0, size_IK1303);
+    m_IK1303.pM = (uint8_t*) IK1303_M_START;
+    m_IK1303.pAND_AMK = (uint8_t*) &IK1303_AND_AMK[0];
+    m_IK1303.pAND_AMK1 = (uint8_t*) &IK1303_AND_AMK[0];
+}
+
+inline  void  __attribute__((always_inline))  IK1306_Clear(void) {
+    const usize size_IK1306 = sizeof(m_IK1306);
+    dbgln(CORE61, "cleared IK1306 size = ", size_IK1306);
+    memset(&m_IK1306, 0, size_IK1306);
+    m_IK1306.pM = (uint8_t*) IK1306_M_START;
+    m_IK1306.pAND_AMK = (uint8_t*) &IK1306_AND_AMK[0];
+    m_IK1306.pAND_AMK1 = (uint8_t*) &IK1306_AND_AMK[0];
+}
+
 void MK61Emu_Cleanup() {
-    for(usize i=0; i < (42+41); i++) mod42_table[i] = i%42;
+    for(usize i=0; i < MOD42_TABLE_SIZE; i++) mod42_table[i] = i%42;
     memset(&ringM,0,sizeof(ringM));
     IK1302_Clear();
     IK1303_Clear();
@@ -1391,41 +1357,6 @@ void MK61Emu_SetAngleUnit(AngleUnit angle) {
 AngleUnit MK61Emu_GetAngleUnit(void) {
     return m_emu.m_angle_unit;
 }
-
-/*
-
-void  read_Y(char* buffer, const char* display_symbols) { // считывает в буфер регистра стека
-  bool lider_zero = true;
-  for(int i=580-33+24; i >= 580-33; i-=3) {
-    const u8 digit = ringM[i];
-    if(digit == 0 && lider_zero) {
-      lider_zero = false;
-    } else {
-      *buffer++ = display_symbols[digit];
-    }
-  }
-}
-
-void    MK61Emu_SetStackStr(StackRegister stack_reg, char sign, char mantissa[8], isize pow) {
-  isize addr = (isize) stack_reg;
-  if(pow < 0) {
-    pow += 100;
-    ringM[addr] = 9;
-  } else {
-    ringM[addr] = 0;
-  }
-  addr -= 3;
-  ringM[addr] = pow / 10;
-  addr -= 3;
-  ringM[addr] = pow % 10;
-  addr -= 3;
-  ringM[addr] = (sign == '-')? 9 : 0;
-
-  for(isize i=0; i<8; i++) {
-    addr -= 3;
-    ringM[addr] = mantissa[i] - '0';
-  }
-}*/
 
 void write_stack_register(stack reg, char sign, char cmantissa[8], isize pow) {
   isize addr = (isize) reg + 1;
@@ -1477,80 +1408,6 @@ const char* read_stack_register(stack reg, char cvalue[15], const char* symbols_
 
   return &cvalue[0];
 }
-/*
-const char* MK61Emu_GetStackStr(StackRegister stack_reg, const char* symbols_set) {
-    char *reg_stack;
-    if (stack_reg == REG_Y) {
-        reg_stack = m_emu.m_stack_y_str;
-    }
-    else {
-        reg_stack = m_emu.m_stack_z_str;
-    }
-
-    memset(reg_stack, 0, INDICATOR_STRING_LENGTH);
-    memset(reg_stack, ' ', INDICATOR_STRING_LENGTH - 3);
-
-     // Формат числа:
-    uint16_t tail_address = (uint16_t)stack_reg; // Смещение последнего байта экспоненты
-
-    // Собираем порядок числа
-    int16_t exp_value = ringM[tail_address - 3] * 10 + ringM[tail_address - 6];
-    if (ringM[tail_address] == 9) {
-        exp_value = -(100 - exp_value);
-    }
-
-    // Собираем мантиссу
-    int i = 0;
-    while (ringM[tail_address - 33 + i * 3] == 0) {
-        if (exp_value == 7 - i || i == 7) {
-            break;
-        }
-        i++;
-    }
-
-    uint8_t digits[8];
-    memset(digits, 0, 8);
-    int digits_len = 0;
-    int j = 8 - i;
-    while (i < 8)
-    {
-        digits[--j] = ringM[tail_address - 33 + i * 3];
-        digits_len++;
-        i++;
-    }
-
-    reg_stack[0] = (ringM[tail_address - 9] == 9) ? '-' : ' ';
-
-    bool has_point = false;
-    j = 1;
-    for (i = 0; i < digits_len; i++) {
-        reg_stack[j++] = symbols_set[digits[i]];
-        if ((i == 0 && (exp_value < 0 || exp_value > 7)) || (i == exp_value)) {
-            reg_stack[j++] = '.';
-            has_point = true;
-        }
-    }
-
-    if (!has_point) {
-        reg_stack[i] = '.';
-    }
-
-    if (exp_value < 0 || exp_value > 7) {
-        if (exp_value < 0) {
-            reg_stack[10] = '-';
-            exp_value = -exp_value;
-        }
-
-        reg_stack[11] = symbols_set[exp_value / 10];
-        reg_stack[12] = symbols_set[exp_value % 10];
-    }
-    else {
-        memset((reg_stack + 11), ' ', 3);
-    }
-
-    return reg_stack;
-}*/
-
 
 //                                           mantisa                   |    pow
 //                                       0   1   2   3   4  5  6  7  8   9  10  11

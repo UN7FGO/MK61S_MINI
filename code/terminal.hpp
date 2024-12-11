@@ -16,11 +16,10 @@
 #include "disasm.hpp"
 #include "tools.hpp"
 
-static const char terminal_symbols[16] = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'L', 'C', '\303', 'E', ' '
-};
-static constexpr u32 seqNOP = seq(sw::K,sw::_0);
-static const u32 key_sequence_on_cmd[15*16] = {
+extern  const char terminal_symbols[16];
+
+static  constexpr u32 seqNOP = seq(sw::K,sw::_0);
+static  const u32 key_sequence_on_cmd[15*16] = {
   seq(sw::_0),  seq(sw::_1),  seq(sw::_2),  seq(sw::_3),  seq(sw::_4), seq(sw::_5), seq(sw::_6), seq(sw::_7), seq(sw::_8), seq(sw::_9), seq(sw::DOT), seq(sw::NEG), seq(sw::POW), seq(sw::CX), seq(sw::Bx), seq(sw::F,sw::Bx),
   seq(sw::ADD), seq(sw::SUB), seq(sw::MUL), seq(sw::DIV), seq(sw::XY), seq(sw::F,sw::DOT), seq(sw::F,sw::_5), seq(sw::F,sw::_1), seq(sw::F,sw::_2), seq(sw::F,sw::_4), seq(sw::F,sw::_5), seq(sw::F,sw::_6), seq(sw::F,sw::_7), seq(sw::F,sw::_8), seq(sw::F,sw::_9), seqNOP,
   seq(sw::F,sw::ADD),seq(sw::F,sw::SUB),seq(sw::F,sw::MUL),seq(sw::F,sw::DIV),seq(sw::F,sw::XY),seq(sw::F,sw::DOT),seq(sw::K,sw::ADD),seq(sw::K,sw::SUB),seq(sw::K,sw::MUL),seq(sw::K,sw::DIV),seq(sw::K,sw::XY),seqNOP,seqNOP,seqNOP,seqNOP,seqNOP,
@@ -460,6 +459,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       u8 code_page[106];
       MK61Emu_GetCodePage(&code_page[0]);
       isize last_cmd_addr = seek_program_END(&code_page[0]);
+      dbgln(MINI, "Last step in programm: ", last_cmd_addr);
       isize j = 0;
       while (j < last_cmd_addr) {
         Serial.print("00"); print_address_as_MK61(j); Serial.write(' ');

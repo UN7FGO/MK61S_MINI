@@ -5,6 +5,7 @@
 #include "rust_types.h"
 
 //#define DEBUG_CORE61        // Полная отладочная информация по ядру mk61s (почти не слушает клавиатуру)
+//#define DEBUG_TRACE         // Отладочная трассировочная информация по значению
 //#define DEBUG_MINI          // Отладочная информация по оболочке MK61S-MINI
 //#define DEBUG_SPIFLASH      // Отладочная информация по обработке внешней флеш памяти
 //#define DEBUG_DISASMBLER    // Отладочная информация по встроенному дисассемблеру МК61 инструкций
@@ -36,73 +37,90 @@
 //defined(__ARM_ARCH_7EM__)
 //defined(__ARM_FEATURE_SIMD32)
 
-#if defined(DEBUG_MEASURE) || defined(DEBUG_PARSE) || defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
- #define SERIAL_OUTPUT
+#if defined(TERMINAL) || defined(DEBUG) 
  //#warning Serial module included!
+#endif
+
+#ifdef DEBUG_TRACE
+  constexpr bool DBG_TRACE = true;
+  #define SERIAL_OUTPUT
+#else
+  constexpr bool DBG_TRACE = false;
 #endif
 
 #ifdef DEBUG_PARSE
   constexpr bool DBG_PARSE = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_PARSE = false;
 #endif
 
 #ifdef DEBUG_MEASURE
   constexpr bool DBG_MEASURE = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MEASURE = false;
 #endif
 
 #ifdef DEBUG_MINI
   constexpr bool DBG_MINI = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MINI = false;
 #endif
 
 #ifdef DEBUG_SPIFLASH
   constexpr bool DBG_SPIROM = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_SPIROM = false;
 #endif
 
 #ifdef DEBUG_DISASMBLER
   constexpr bool DBG_DISASM = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_DISASM = false;
 #endif
 
 #ifdef DEBUG_KBD
   constexpr bool DBG_KBD = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_KBD = false;
 #endif
 
 #ifdef DEBUG_MENU
   constexpr bool DBG_MENU = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MENU = false;
 #endif
 
 #ifdef DEBUG_BASIC
   constexpr bool DBG_BASIC = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_BASIC = false;
 #endif
 
 #ifdef DEBUG_CORE61
   constexpr bool DBG_CORE61 = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_CORE61 = false;
 #endif
 
 #ifdef DEBUG_LIBRARY
   constexpr bool DBG_LIB61 = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_LIB61 = false;
 #endif
 
 #ifdef DEBUG_MK61E
   constexpr bool DBG_MK61E = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MK61E = false;
 #endif
