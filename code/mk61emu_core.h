@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * This file is part of the MK61S distribution (https://gitlab.com/vitasam/mk61s).
  * Copyright (c) 2020- vitasam.
  * 
@@ -78,14 +78,12 @@ typedef enum {
 
 enum enum_core61_stage {START, NEXT};
 
-typedef enum
-{
+typedef enum {
     MK61_OK = 0,
     MK61_ERROR
 } MK61Result;
 
-typedef enum
-{
+typedef enum {
     NONE   = 0,
     RADIAN = 10,  // Р - радианы
     DEGREE = 11, // Г - градусы
@@ -93,8 +91,7 @@ typedef enum
     DEGREE_ERASE = 0xFF // Г - градусы установленные как стертое значение флеш (умолчание)
 } AngleUnit;
 
-typedef enum
-{
+typedef enum {
     // Offsets in RingM buffer
     REG_X1  =   580 - 42 - 42,
     REG_X   =   580 - 42,
@@ -116,8 +113,7 @@ typedef char mk61_register_position_t;
 
 typedef mk61_register_position_t mk61_register_t[MK61_REGISTER_POSITIONS_COUNT];
 
-/*
-typedef struct { // Структура микросхемы К145IИК302 
+typedef struct{
     uint32_t AMK;
 
     uint32_t  key_y, key_x, key_xm;
@@ -133,77 +129,23 @@ typedef struct { // Структура микросхемы К145IИК302
     uint8_t*  pM;
 }  IK1302;
 
-typedef struct { // Структура микросхемы К145IИК303 
-    uint8_t *pM;
-    uint8_t R[IK13_MTICK_COUNT];
-    uint8_t ST[IK13_MTICK_COUNT];
-
-    io_t AMK, MOD;
-    io_t S, S1, L, T, P;
-
-    //uint16_t uI_hi;     // Instruction HI word
-    uint8_t  flag_FC;
-    uint8_t *pAND_AMK;  // Precalc offset from microprograms for signal_I 0..26
-    uint8_t *pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
-    uint16_t key_x, key_xm, key_y, comma;
-}  IK1303;
-
-typedef struct { // Структура микросхемы К145IИК306 
-    //uint16_t uI_hi;  // Instruction HI word
-    uint32_t AMK;
-
-    uint32_t  L, S, S1, P, T, MOD, flag_FC;
-
-    uint8_t   R[IK13_MTICK_COUNT];
-    uint8_t   ST[IK13_MTICK_COUNT];
-
-    uint8_t*  pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
-    uint8_t*  pAND_AMK;
-    uint8_t*  pM;
-}  IK1306;
-*/
-
-typedef struct { // Структура микросхемы К145IИК130x
-    uint32_t AMK;	//	0..67
-    uint8_t  R [IK13_MTICK_COUNT];
-    uint8_t  ST[IK13_MTICK_COUNT];
-
-	uint32_t S, S1, MOD, flag_FC;
-	uint32_t L,T,P; //	0/1
-/*	struct {
-		uint32_t L:1; //	
-		uint32_t T:1; //	
-		uint32_t P:1; //	
-	};	//bits	*/
-
-    uint8_t* pAND_AMK1;		// Precalc offset from microprograms for signal_I 27..35
-    uint8_t* pAND_AMK;		// Precalc offset from microprograms for signal_I 0..26
-    uint8_t* pM;
-
-    uint32_t key_y, key_x, key_xm, comma;
-    uint32_t displayed;
-}IK130x_t;
-
-typedef IK130x_t IK1302;	//FIXME: delete me
-
 /**
  * @brief The MK61 emulator object
  */
 #define INDICATOR_STRING_LENGTH				15
-typedef struct {
+typedef struct{
     char m_indicator_str[INDICATOR_STRING_LENGTH];
     char m_stack_y_str[INDICATOR_STRING_LENGTH];
     char m_stack_z_str[INDICATOR_STRING_LENGTH];
     AngleUnit m_angle_unit;
 } MK61Emu;
 
-extern  IK130x_t	m_IK1302;
-extern  u8      ringM[SIZE_RING_M];
+extern  IK1302  m_IK1302;
+extern  uint8_t ringM[SIZE_RING_M];
 
 namespace core_61 {
-  
   inline    isize get_ring_address(isize linear_address) {
-    const isize cycle_x = ((linear_address % 7) == 0)?  linear_address : (linear_address - 7);
+    const   isize cycle_x = ((linear_address % 7) == 0)?  linear_address : (linear_address - 7);
     return 41 + cycle_x * 6;
   }
 

@@ -16,11 +16,10 @@
 #include "disasm.hpp"
 #include "tools.hpp"
 
-static const char terminal_symbols[16] = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'L', 'C', '\303', 'E', ' '
-};
-static constexpr u32 seqNOP = seq(sw::K,sw::_0);
-static const u32 key_sequence_on_cmd[15*16] = {
+extern  const char terminal_symbols[16];
+
+static  constexpr u32 seqNOP = seq(sw::K,sw::_0);
+static  const u32 key_sequence_on_cmd[15*16] = {
   seq(sw::_0),  seq(sw::_1),  seq(sw::_2),  seq(sw::_3),  seq(sw::_4), seq(sw::_5), seq(sw::_6), seq(sw::_7), seq(sw::_8), seq(sw::_9), seq(sw::DOT), seq(sw::NEG), seq(sw::POW), seq(sw::CX), seq(sw::Bx), seq(sw::F,sw::Bx),
   seq(sw::ADD), seq(sw::SUB), seq(sw::MUL), seq(sw::DIV), seq(sw::XY), seq(sw::F,sw::DOT), seq(sw::F,sw::_5), seq(sw::F,sw::_1), seq(sw::F,sw::_2), seq(sw::F,sw::_4), seq(sw::F,sw::_5), seq(sw::F,sw::_6), seq(sw::F,sw::_7), seq(sw::F,sw::_8), seq(sw::F,sw::_9), seqNOP,
   seq(sw::F,sw::ADD),seq(sw::F,sw::SUB),seq(sw::F,sw::MUL),seq(sw::F,sw::DIV),seq(sw::F,sw::XY),seq(sw::F,sw::DOT),seq(sw::K,sw::ADD),seq(sw::K,sw::SUB),seq(sw::K,sw::MUL),seq(sw::K,sw::DIV),seq(sw::K,sw::XY),seqNOP,seqNOP,seqNOP,seqNOP,seqNOP,
@@ -162,12 +161,16 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
     void dump_mk61_code_page(void) {
       u8 code_page[106];
       MK61Emu_GetCodePage(&code_page[0]);
-		for(isize i = 0; i < 105; i++) {
-		  Serial.print(i%16==8 ? " | " : " ");
-		  Serial_write_hex(code_page[i]);
-		  if (i%16 == 15) Serial.println();
-		}
+      isize j = 0;
+      do {
+        for(isize i = 0; i < 16; i++) {
+          Serial_write_hex(code_page[j]);
+          Serial.print("  ");          
+          j++;
+          if ( j >= 105 ) break;
+        }
         Serial.println();
+      } while (j < 105);
     }
 
     char* ISA_61_code(u8 opcode, char* text) {
@@ -235,7 +238,12 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
 
     void /* __attribute__((optimize("O0"))) */ output_version(void) {
       Serial.print("sizeof Serial "); Serial.println(sizeof(HardwareSerial));
-	  Serial.print(MODEL " ver. " __DATE__ "(" __TIME__ ")\n");
+      Serial.print(MODEL);
+      Serial.print(" ver. ");
+      Serial.print(__DATE__);
+      Serial.write('(');
+      Serial.print(__TIME__);
+      Serial.println(')');
     }
 
     void DumpRegisters(void) {
@@ -342,7 +350,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
             const u8 code = code_page[address];
             if(address > 0 && len_code_command(code_page[address-1]) == 2) {
               Serial_write_hex(code);
-			  for(usize cnt_space=2; cnt_space < MAX_LEN_CLASSIC_MNEMO + 2; cnt_space++) Serial.write(' ');
+              for(usize cnt_space=2; cnt_space < MAX_LEN_CLASSIC_MNEMO + 2; cnt_space++) Serial.print(' ');
             } else {
               Serial.print(ISA_CLASSIC_61_code(code, &op[0])); 
               for(usize ln=strlen(op); ln < MAX_LEN_CLASSIC_MNEMO; ln++) Serial.write(' ');
@@ -442,7 +450,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
             } 
                 
             const u8 byte_code = (hi_digit << 4) | lo_digit;
-			Serial.print(byte_code, HEX); Serial.write( input_buffer[i] ? ',' : ';');
+            Serial.print(byte_code, HEX); Serial.print(',');
             MK61Emu_SetCode(core_61::get_ring_address(linear_addr++), byte_code);
           }
     }
@@ -451,6 +459,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       u8 code_page[106];
       MK61Emu_GetCodePage(&code_page[0]);
       isize last_cmd_addr = seek_program_END(&code_page[0]);
+      dbgln(MINI, "Last step in programm: ", last_cmd_addr);
       isize j = 0;
       while (j < last_cmd_addr) {
         Serial.print("00"); print_address_as_MK61(j); Serial.write(' ');

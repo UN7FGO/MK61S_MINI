@@ -1,10 +1,12 @@
-﻿#ifndef CONFIG
+#ifndef CONFIG
 #define CONFIG
 
 #include "Arduino.h"
 #include "rust_types.h"
 
-//#define DEBUG_CORE61        // Полная отладочная информация по ядру mk61s (почти не слушает клавиатуру)
+#define IS_CORTEX_M4() (__ARM_ARCH == 7)  // Тип ядра микроконтроллера содержащий аппаратный множитель
+
+//#define DEBUG_CORE61
 //#define DEBUG_MINI          // Отладочная информация по оболочке MK61S-MINI
 //#define DEBUG_SPIFLASH      // Отладочная информация по обработке внешней флеш памяти
 //#define DEBUG_DISASMBLER    // Отладочная информация по встроенному дисассемблеру МК61 инструкций
@@ -32,11 +34,7 @@
 #define MK61s
 //#define MK52s
 
-#define IS_CORTEX_M4() (__ARM_ARCH == 7)
-//defined(__ARM_ARCH_7EM__)
-//defined(__ARM_FEATURE_SIMD32)
-
-#if defined(DEBUG_MEASURE) || defined(DEBUG_PARSE) || defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
+#if defined(DEBUG_MEASURE) || defined(DEBUG_MEASURE) || defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
  #define SERIAL_OUTPUT
  //#warning Serial module included!
 #endif
@@ -141,12 +139,12 @@
 #endif
 
 #ifdef MK61s
-      #define MODEL "MK61s"
+      const char MODEL[] = "MK61s";
       //                       0123456789ABCDEF
       const char FULL_MODEL_NAME[] = "MK61s *firmware*";
   #else 
     #ifdef MK52s
-      #define MODEL "MK52s"
+      const char MODEL[] = "MK52s";
       const char FULL_MODEL_NAME[] = "MK52s *firmware*";
     #endif
 #endif
