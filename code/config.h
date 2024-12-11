@@ -1,4 +1,4 @@
-#ifndef CONFIG
+﻿#ifndef CONFIG
 #define CONFIG
 
 #include "Arduino.h"
@@ -141,12 +141,12 @@
 #endif
 
 #ifdef MK61s
-      const char MODEL[] = "MK61s";
+      #define MODEL "MK61s"
       //                       0123456789ABCDEF
       const char FULL_MODEL_NAME[] = "MK61s *firmware*";
   #else 
     #ifdef MK52s
-      const char MODEL[] = "MK52s";
+      #define MODEL "MK52s"
       const char FULL_MODEL_NAME[] = "MK52s *firmware*";
     #endif
 #endif

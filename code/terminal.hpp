@@ -162,16 +162,12 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
     void dump_mk61_code_page(void) {
       u8 code_page[106];
       MK61Emu_GetCodePage(&code_page[0]);
-      isize j = 0;
-      do {
-        for(isize i = 0; i < 16; i++) {
-          Serial_write_hex(code_page[j]);
-          Serial.print("  ");          
-          j++;
-          if ( j >= 105 ) break;
-        }
+		for(isize i = 0; i < 105; i++) {
+		  Serial.print(i%16==8 ? " | " : " ");
+		  Serial_write_hex(code_page[i]);
+		  if (i%16 == 15) Serial.println();
+		}
         Serial.println();
-      } while (j < 105);
     }
 
     char* ISA_61_code(u8 opcode, char* text) {
@@ -239,12 +235,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
 
     void /* __attribute__((optimize("O0"))) */ output_version(void) {
       Serial.print("sizeof Serial "); Serial.println(sizeof(HardwareSerial));
-      Serial.print(MODEL);
-      Serial.print(" ver. ");
-      Serial.print(__DATE__);
-      Serial.write('(');
-      Serial.print(__TIME__);
-      Serial.println(')');
+	  Serial.print(MODEL " ver. " __DATE__ "(" __TIME__ ")\n");
     }
 
     void DumpRegisters(void) {
@@ -351,7 +342,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
             const u8 code = code_page[address];
             if(address > 0 && len_code_command(code_page[address-1]) == 2) {
               Serial_write_hex(code);
-              for(usize cnt_space=2; cnt_space < MAX_LEN_CLASSIC_MNEMO + 2; cnt_space++) Serial.print(' ');
+			  for(usize cnt_space=2; cnt_space < MAX_LEN_CLASSIC_MNEMO + 2; cnt_space++) Serial.write(' ');
             } else {
               Serial.print(ISA_CLASSIC_61_code(code, &op[0])); 
               for(usize ln=strlen(op); ln < MAX_LEN_CLASSIC_MNEMO; ln++) Serial.write(' ');
@@ -451,7 +442,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
             } 
                 
             const u8 byte_code = (hi_digit << 4) | lo_digit;
-            Serial.print(byte_code, HEX); Serial.print(',');
+			Serial.print(byte_code, HEX); Serial.write( input_buffer[i] ? ',' : ';');
             MK61Emu_SetCode(core_61::get_ring_address(linear_addr++), byte_code);
           }
     }
