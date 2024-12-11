@@ -4,7 +4,7 @@
 ![Arduino](https://img.shields.io/badge/-Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white)
 
 
-# MK61S_MINI
+# MK61S_MINI (TEST)
 
 Развитие проекта эмулятора МК-61s - <a href="https://web.archive.org/web/20231130170055/https://gitlab.com/vitasam/mk61s/">gitlab.com/vitasam/mk61s</a>
 
