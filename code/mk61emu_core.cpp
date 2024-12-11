@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * This file is part of the MK61S distribution (https://gitlab.com/vitasam/mk61s).
  * Copyright (c) 2020- vitasam.
  * 
@@ -27,14 +27,6 @@
 #include "tools.hpp"
 #include "rust_types.h"
 
-#define	D(...)	printf(__VA_ARGS__)
-
-// #if defined(DBG_CORE61)
-// #define	D(...)	printf(__VA_ARGS__)
-// #else
-// #define	D(...)
-// #endif
-
 typedef struct {  // Структору ПЗУ для одной микросхемы комплекта К145ИК(02,03,06)
     microinstruction_t microinstructions[68]; // микрокоманды
     instruction_t instructions[256];          // команды
@@ -46,7 +38,6 @@ typedef struct { // ПЗУ микрокода, микропрограмм для
     IK13_ROM IK1306;
 } mk61ROM_t;
 
-/*
 typedef struct { // Структура микросхемы К145IИК303 
     uint8_t *pM;
     uint8_t R[IK13_MTICK_COUNT];
@@ -75,10 +66,6 @@ typedef struct { // Структура микросхемы К145IИК306
     uint8_t*  pAND_AMK;
     uint8_t*  pM;
 }  IK1306;
-*/
-
-typedef IK130x_t IK1303;
-typedef IK130x_t IK1306;
 
 void IK1302_Tick(mtick_t signal_I, usize J_signal_I);
 void IK1302_Clear(void);
@@ -105,7 +92,7 @@ static const char default_symbols[16] = {
 #if IS_CORTEX_M4() //__ARM_ARCH == 7
   #warning("Hardware mul/div present!")
 #else
-  #warning("No fast mul/div detected. Falling back to LUT for x9 and /3 operations.")
+  #warning("Hardware mul/div unavaliable! Instantiate multiply by 9 and divide by 3 as constant table!")
   constexpr static const std::array<uint8_t, 256> div3_table = []() {
     std::array<uint8_t, 256> _{};
     for (auto i=0; i<256; i++) _[i]=i/3;
@@ -422,11 +409,10 @@ const uint8_t* IK1302_M_START = &ringM[OFFSET_IK1302/*252+42+42*/];
 const uint8_t* IK1303_M_START = &ringM[OFFSET_IK1303/*252+42+42+42*/];
 const uint8_t* IK1306_M_START = &ringM[OFFSET_IK1306/*252+42+42+42+42*/];
 
-IK130x_t m_IK1302;
+IK1302 m_IK1302;
 //uint16_t IK1302_uI_hi;         // Instruction HI word
 IK1303 m_IK1303;
 
-/*
 static const uint8_t IK1302_DCW[68] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x02, 0x00, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -458,7 +444,6 @@ static const uint8_t IK1306_DCW[68] = {
   0x02, 0x02, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x02, 0x02, 0x00,
   0x02, 0x02, 0x00, 0x00
 };
-*/
 
 static const uint8_t IK1302_AND_AMK[1152] = {
   0x00, 0x00, 0x00, 0x10, 0x03, 0x1D, 0x00, 0x07, 0x1E, 0x10, 0x03, 0x1C, 0x0B, 0x07, 0x0C, 0x1E,
@@ -687,16 +672,16 @@ static const uint8_t IK1306_AND_AMK[1152] = {
 
 IK1306 m_IK1306;
 
-inline __attribute__((always_inline))	//TODO: remove me
-static void _CycleE(int J_signal_I, mtick_t &signal_I) {
+//TODO: remove me static
+inline void __attribute__((always_inline)) _CycleE(int J_signal_I, mtick_t &signal_I) {
 	IK1302_Tick(signal_I, J_signal_I);
 	IK1303_Tick(signal_I, J_signal_I);
 	IK1306_Tick(signal_I, J_signal_I);
 }
 
 
-inline __attribute__((always_inline)) 	//TODO: remove me
-static void _CycleB(int J_signal_I, mtick_t &signal_I) {
+//TODO: remove me
+inline void __attribute__((always_inline)) _CycleB(int J_signal_I, mtick_t &signal_I) {
 	_CycleE(J_signal_I, signal_I);
 	signal_I++;
 }
@@ -756,9 +741,7 @@ void dumpm(uint16_t sig, uint16_t cyc) {
 #endif
 
 inline usize IK1302_GoZero(void) {
-	uint32_t idx = (uint16_t)m_IK1302.R[36] + 16 * (uint16_t)m_IK1302.R[39];
-    uint32_t uI = ROM.IK1302.instructions[idx];
-//	printf("\n{i:%03x %08x}", idx, uI);
+    uint32_t uI = ROM.IK1302.instructions[(uint16_t)m_IK1302.R[36] + 16 * (uint16_t)m_IK1302.R[39]];
     const usize IK1302_uI_hi = uI >> 16;
 
 
@@ -859,8 +842,6 @@ void cycle(void) {
           m_IK1306.pAND_AMK  = (uint8_t*) &IK1306_AND_AMK[MUL9(IK1306_uI_hi)];
       }
 
-//         #pragma GCC unroll 99	//TODO: remove me
-//         for (auto _ : {0,1,2, 3,4,5}) { CycleB(_); }	//36..41
           CycleB(0);   // 36
           CycleB(1);   // 37
           CycleB(2);   // 38
@@ -886,63 +867,34 @@ void cycle(void) {
 #endif
 }
 
-extern "C" {
-void mi2_exec(IK130x_t& dev, mtick_t _I, int idx);
-void mi3_exec(IK130x_t& dev, mtick_t _I, int idx);
-void mi6_exec(IK130x_t& dev, mtick_t _I, int idx);
-}
-
-//inline __attribute__((always_inline)) 
 void IK1302_Tick(mtick_t signal_I, usize J_signal_I)
 {
  uint32_t  microinstruction;
  uint32_t  val, tmp;
  uint32_t  mi_hi;
 
-	if (0) D("\n IJ:%2d/%d",	signal_I,	J_signal_I);
+// Вывод дампа отладочной информации 
+  dbg(CORE61, "I:", signal_I, " J:",  J_signal_I, " 1302.R[");
+  for(u8 R : m_IK1302.R) dbghex(CORE61, ".", R);
+  dbg(CORE61, "]\n 1302.ST[");
+  for(u8 ST : m_IK1302.ST) dbghex(CORE61, ".", ST);
+  dbghexln(CORE61, "]\n pM = $", (usize) m_IK1302.pM - (usize) &ringM[0], " pAND_AMK = $", (usize) m_IK1302.pAND_AMK - (usize) IK1302_AND_AMK, " pAND_AMK1 = $", (usize) m_IK1302.pAND_AMK1 - (usize) IK1302_AND_AMK);
+  dbghexln(CORE61, "AMK = ", m_IK1302.AMK);
+  dbghex(CORE61, "FLAGS L ", m_IK1302.L);
+  dbghex(CORE61, ":S ", m_IK1302.S);
+  dbghex(CORE61, ":S1 ", m_IK1302.S1);
+  dbghex(CORE61, ":P ", m_IK1302.P);
+  dbghex(CORE61, ":T ", m_IK1302.T);
+  dbghex(CORE61, ":MOD ", m_IK1302.MOD);
+  dbghexln(CORE61, ":flag_FC ", m_IK1302.flag_FC);
+
 
     tmp = (uint8_t) m_IK1302.pAND_AMK[J_signal_I];
     if (tmp > 59 && m_IK1302.L == 0){ // Если AMK больше 59 (60,61,62,63), то пересчитываются (60,62,64,66) или (61,63,65,67) при L=0
        tmp++;
     }
-	assert(tmp<68);
     microinstruction = ROM.IK1302.microinstructions[tmp];
     m_IK1302.AMK = tmp;
-
-    mi2_exec(m_IK1302, signal_I, tmp);
-	return;
-
-#if 0
-	if (0) {
-	// Вывод дампа отладочной информации 
-	//	dbghex(CORE61, "\n AMK:", m_IK1302.AMK);
-		D(" %2x",		m_IK1302.AMK);
-		D(" %08x",		microinstruction);
-	//	dbghex(CORE61, " FLAGS:[ L ", m_IK1302.L);
-	//	dbghex(CORE61, ":S ", m_IK1302.S);
-	//	dbghex(CORE61, ":S1 ", m_IK1302.S1);
-	//	dbghex(CORE61, ":P ", m_IK1302.P);
-	//	dbghex(CORE61, ":T ", m_IK1302.T);
-	//	dbghex(CORE61, ":MOD ", m_IK1302.MOD);
-	//	dbghex(CORE61, ":flag_FC ", m_IK1302.flag_FC);
-	//	dbg(CORE61, "]");
-
-		dbghex(CORE61, "\tL:", m_IK1302.L);
-		dbghex(CORE61, " S:", m_IK1302.S);
-		dbghex(CORE61, " S1:", m_IK1302.S1);
-		dbghex(CORE61, " P:", m_IK1302.P);
-		dbghex(CORE61, " T:", m_IK1302.T);
-		dbghex(CORE61, " MOD:", m_IK1302.MOD);
-		dbghex(CORE61, " f_FC:", m_IK1302.flag_FC);
-//		dbg(CORE61, "}");
-
-		D("\t{R:");
-		for(u8 R : m_IK1302.R) dbghex(CORE61, " ", R);
-		D("}\t{ST:");
-		for(u8 ST : m_IK1302.ST) dbghex(CORE61, " ", ST);
-	//  dbghexln(CORE61, "]\n\t\tpM = $", (usize)( m_IK1302.pM - &ringM[0]), " pAND_AMK = $", (usize)(m_IK1302.pAND_AMK - IK1302_AND_AMK), " pAND_AMK1 = $", (usize)(m_IK1302.pAND_AMK1 - IK1302_AND_AMK) );
-		D("}\tpM= %x pAND_AMK= %x pAND_AMK1= %x", (m_IK1302.pM - &ringM[0]), (m_IK1302.pAND_AMK - IK1302_AND_AMK), (m_IK1302.pAND_AMK1 - IK1302_AND_AMK) );
-	}
 
     mi_hi = (microinstruction >> 16);
  //---------------------------------------------------------
@@ -1073,8 +1025,7 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
                     m_IK1302.ST[MOD42(signal_I + 2)] = tmp;
           }
     }
-#endif
-}  
+}
 
 //uint8_t IK1302_DCWA[68];
 void IK1302_Clear(void) {
@@ -1115,7 +1066,6 @@ void IK1303_Clear(void)
     m_IK1303.pAND_AMK1  = (uint8_t*) &IK1303_AND_AMK[0];
 }
 
-//inline __attribute__((always_inline)) 
 void IK1303_Tick(mtick_t signal_I, usize J_signal_I)
 {
  uint32_t tmp;
@@ -1130,14 +1080,6 @@ void IK1303_Tick(mtick_t signal_I, usize J_signal_I)
  microinstruction = ROM.IK1303.microinstructions[tmp];
  m_IK1303.AMK = tmp;
 
-	mi3_exec(m_IK1303, signal_I, tmp);
-	return;
-#if 0
-//---------------------------------------------------------
-
-
- 
- 
  mi_hi = (microinstruction >> 16);
 //---------------------------------------------------------
  if((((microinstruction >> 24) & 0x03) == 0x2) || (((microinstruction >> 24) & 0x03) == 0x3)) {
@@ -1274,7 +1216,6 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
                     m_IK1303.ST[MOD42(signal_I + 2)] = tmp;
           }
     }
-#endif
 }
 
 void IK1306_Clear(void)
@@ -1292,7 +1233,6 @@ void IK1306_Clear(void)
     m_IK1306.pAND_AMK1  = (uint8_t*) &IK1306_AND_AMK[0];
 }
 
-//inline __attribute__((always_inline)) 
 void IK1306_Tick(mtick_t signal_I, usize J_signal_I)
 {
     uint32_t tmp, mi_hi;
@@ -1304,12 +1244,6 @@ void IK1306_Tick(mtick_t signal_I, usize J_signal_I)
     }
     microinstruction = ROM.IK1306.microinstructions[tmp];
     m_IK1306.AMK = tmp;
-
-	mi6_exec(m_IK1306, signal_I, tmp);
-	return;
-
-#if 0
-//---------------------------------------------------------
 
 
     mi_hi = (microinstruction >> 16);
@@ -1412,7 +1346,6 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
                     m_IK1306.ST[MOD42(signal_I + 2)] = tmp;
           }
     }
-#endif
 }
 
 /**
@@ -1420,7 +1353,7 @@ printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_
  */
 
 void MK61Emu_Cleanup() {
-    for(usize i=0; i < (42+41); i++) mod42_table[i] = i%42;		//FIXME: soooo uglyyyyy. delete me -> .data_fast seg
+    for(usize i=0; i < (42+41); i++) mod42_table[i] = i%42;
     memset(&ringM,0,sizeof(ringM));
     IK1302_Clear();
     IK1303_Clear();

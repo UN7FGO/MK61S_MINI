@@ -113,7 +113,7 @@ class class_disassm_mk61 {
           if(addr < 0xC3) { // до адреса 0xC3
             const u8 code = MK61Emu_GetCode(core_61::get_ring_address(addr));
             #ifdef DEBUG_DISASMBLER
-              Serial.print("mk61 IP "); Serial.print(mk61s.get_IPH()); Serial.write(':'); Serial.print(mk61s.get_IPL());
+              Serial.print("mk61 IP "); Serial.print(mk61s.get_IPH()); Serial.print(':'); Serial.print(mk61s.get_IPL());
               Serial.print(" linear address $"); Serial.print(addr); Serial.print(" code "); Serial.println(code, HEX);
             #endif
             if(code <= 9) {

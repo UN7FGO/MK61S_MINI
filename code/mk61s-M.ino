@@ -1,4 +1,4 @@
-﻿#include "config.h"
+#include "config.h"
 
 static  class_calc_config   config;
 

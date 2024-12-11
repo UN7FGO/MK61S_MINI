@@ -1,4 +1,4 @@
-﻿#ifndef CONFIG
+#ifndef CONFIG
 #define CONFIG
 
 #include "Arduino.h"
@@ -13,7 +13,7 @@
 //#define DEBUG_BASIC         // Отладочная информация по BASIC
 //#define DEBUG_LIBRARY       // Отладочная информация по библиотеке программ МК61
 //#define DEBUG_MK61E         // Отладочная информация расширяющая представление вывода терминала по МК61
-//#define DEBUG_PARSE         // Отладочная информация по парсеру ассемблера
+//#define DEBUG_PARSE           // Отладочная информация по парсеру ассемблера
 //#define EXPAND_RING_MK61    // Увеличить объем оперативной памяти кольца МК61 на еще один регистр IK130X
 #define DEBUG_MEASURE       // Вывод времени исполнения от С/П до С/П для вычисления производительности ядра
 //#define MK61_EXTENDED
@@ -141,12 +141,12 @@
 #endif
 
 #ifdef MK61s
-      #define MODEL "MK61s"
+      const char MODEL[] = "MK61s";
       //                       0123456789ABCDEF
       const char FULL_MODEL_NAME[] = "MK61s *firmware*";
   #else 
     #ifdef MK52s
-      #define MODEL "MK52s"
+      const char MODEL[] = "MK52s";
       const char FULL_MODEL_NAME[] = "MK52s *firmware*";
     #endif
 #endif
