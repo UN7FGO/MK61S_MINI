@@ -34,73 +34,83 @@
 #define MK61s
 //#define MK52s
 
-#if defined(DEBUG_MEASURE) || defined(DEBUG_MEASURE) || defined(MK61E) || defined(TERMINAL) || defined(DEBUG_CORE61) || defined(DEBUG_MENU) || defined(DEBUG_MINI) || defined(DEBUG) || defined(DEBUG_KBD) || defined(DEBUG_M61) || defined(DEBUG_BASIC) || defined(DEBUG_DISASMBLER) || defined(DEBUG_LIBRARY) || defined(DEBUG_SPIFLASH)
- #define SERIAL_OUTPUT
+#if defined(TERMINAL) || defined(DEBUG) 
  //#warning Serial module included!
 #endif
 
 #ifdef DEBUG_PARSE
   constexpr bool DBG_PARSE = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_PARSE = false;
 #endif
 
 #ifdef DEBUG_MEASURE
   constexpr bool DBG_MEASURE = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MEASURE = false;
 #endif
 
 #ifdef DEBUG_MINI
   constexpr bool DBG_MINI = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MINI = false;
 #endif
 
 #ifdef DEBUG_SPIFLASH
   constexpr bool DBG_SPIROM = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_SPIROM = false;
 #endif
 
 #ifdef DEBUG_DISASMBLER
   constexpr bool DBG_DISASM = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_DISASM = false;
 #endif
 
 #ifdef DEBUG_KBD
   constexpr bool DBG_KBD = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_KBD = false;
 #endif
 
 #ifdef DEBUG_MENU
   constexpr bool DBG_MENU = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MENU = false;
 #endif
 
 #ifdef DEBUG_BASIC
   constexpr bool DBG_BASIC = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_BASIC = false;
 #endif
 
 #ifdef DEBUG_CORE61
   constexpr bool DBG_CORE61 = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_CORE61 = false;
 #endif
 
 #ifdef DEBUG_LIBRARY
   constexpr bool DBG_LIB61 = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_LIB61 = false;
 #endif
 
 #ifdef DEBUG_MK61E
   constexpr bool DBG_MK61E = true;
+  #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MK61E = false;
 #endif
@@ -140,12 +150,12 @@
 
 #ifdef MK61s
       const char MODEL[] = "MK61s";
-      //                       0123456789ABCDEF
-      const char FULL_MODEL_NAME[] = "MK61s *firmware*";
+      //                              0123456789ABCDEF
+      const char FULL_MODEL_NAME[] = "MK61s-E firmware";
   #else 
     #ifdef MK52s
       const char MODEL[] = "MK52s";
-      const char FULL_MODEL_NAME[] = "MK52s *firmware*";
+      const char FULL_MODEL_NAME[] = "MK52s-E firmware";
     #endif
 #endif
 

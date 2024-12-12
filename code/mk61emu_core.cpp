@@ -37,32 +37,34 @@ typedef struct  { // ПЗУ микрокода, микропрограмм дл�
     IK13_ROM  IK1303;
     IK13_ROM  IK1306;
 } mk61ROM_t;
-
+/*
 typedef struct  { // Структура микросхемы К145IИК303
-  uint8_t   *pM;
+  io_t      AMK;
+
+  uint16_t  key_x, key_xm, key_y, comma;
+
   uint8_t   R[IK13_MTICK_COUNT];
   uint8_t   ST[IK13_MTICK_COUNT];
 
-  io_t      AMK, MOD;
-  io_t      S, S1, L, T, P, flag_FC;
+  io_t      L, S, S1, P, T, MOD, flag_FC;
 
   uint8_t   *pAND_AMK;  // Precalc offset from microprograms for signal_I 0..26
   uint8_t   *pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
-  uint16_t  key_x, key_xm, key_y, comma;
+  uint8_t   *pM;
 } IK1303;
 
 typedef struct  { // Структура микросхемы К145IИК306
-    uint32_t  AMK;
-    uint32_t  L, S, S1, P, T, MOD, flag_FC;
+  uint32_t  AMK;
+  uint32_t  L, S, S1, P, T, MOD, flag_FC;
 
-    uint8_t   R[IK13_MTICK_COUNT];
-    uint8_t   ST[IK13_MTICK_COUNT];
+  uint8_t   R[IK13_MTICK_COUNT];
+  uint8_t   ST[IK13_MTICK_COUNT];
 
-    uint8_t*  pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
-    uint8_t*  pAND_AMK;
-    uint8_t*  pM;
+  uint8_t*  pAND_AMK1; // Precalc offset from microprograms for signal_I 27..35
+  uint8_t*  pAND_AMK;
+  uint8_t*  pM;
 } IK1306;
-
+*/
 void IK1302_Tick(mtick_t signal_I, usize J_signal_I);
 void IK1303_Tick(mtick_t signal_I, usize J_signal_I);
 void IK1306_Tick(mtick_t signal_I, usize J_signal_I);
@@ -140,36 +142,7 @@ static const uint16_t mul9_table[256] = {
 
 static  constexpr usize MOD42_TABLE_SIZE = 42 + 41;
 static  u8 __attribute__ ((aligned (16))) mod42_table[MOD42_TABLE_SIZE];
-/*
-const uint8_t mod42_table[256] = {
-  0 % 42,  1 % 42,  2 % 42,  3 % 42,  4 % 42,  5 % 42,  6 % 42,  7 % 42,  8 % 42,  9 % 42,
- 10 % 42, 11 % 42, 12 % 42, 13 % 42, 14 % 42, 15 % 42, 16 % 42, 17 % 42, 18 % 42, 19 % 42,
- 20 % 42, 21 % 42, 22 % 42, 23 % 42, 24 % 42, 25 % 42, 26 % 42, 27 % 42, 28 % 42, 29 % 42,
- 30 % 42, 31 % 42, 32 % 42, 33 % 42, 34 % 42, 35 % 42, 36 % 42, 37 % 42, 38 % 42, 39 % 42,
- 40 % 42, 41 % 42, 42 % 42, 43 % 42, 44 % 42, 45 % 42, 46 % 42, 47 % 42, 48 % 42, 49 % 42,
- 50 % 42, 51 % 42, 52 % 42, 53 % 42, 54 % 42, 55 % 42, 56 % 42, 57 % 42, 58 % 42, 59 % 42,
- 60 % 42, 61 % 42, 62 % 42, 63 % 42, 64 % 42, 65 % 42, 66 % 42, 67 % 42, 68 % 42, 69 % 42,
- 70 % 42, 71 % 42, 72 % 42, 73 % 42, 74 % 42, 75 % 42, 76 % 42, 77 % 42, 78 % 42, 79 % 42,
- 80 % 42, 81 % 42, 82 % 42, 83 % 42, 84 % 42, 85 % 42, 86 % 42, 87 % 42, 88 % 42, 89 % 42,
- 90 % 42, 91 % 42, 92 % 42, 93 % 42, 94 % 42, 95 % 42, 96 % 42, 97 % 42, 98 % 42, 99 % 42,
- 100 % 42, 101 % 42, 102 % 42, 103 % 42, 104 % 42, 105 % 42, 106 % 42, 107 % 42, 108 % 42, 109 % 42,
- 110 % 42, 111 % 42, 112 % 42, 113 % 42, 114 % 42, 115 % 42, 116 % 42, 117 % 42, 118 % 42, 119 % 42,
- 120 % 42, 121 % 42, 122 % 42, 123 % 42, 124 % 42, 125 % 42, 126 % 42, 127 % 42, 128 % 42, 129 % 42,
- 130 % 42, 131 % 42, 132 % 42, 133 % 42, 134 % 42, 135 % 42, 136 % 42, 137 % 42, 138 % 42, 139 % 42,
- 140 % 42, 141 % 42, 142 % 42, 143 % 42, 144 % 42, 145 % 42, 146 % 42, 147 % 42, 148 % 42, 149 % 42,
- 150 % 42, 151 % 42, 152 % 42, 153 % 42, 154 % 42, 155 % 42, 156 % 42, 157 % 42, 158 % 42, 159 % 42,
- 160 % 42, 161 % 42, 162 % 42, 163 % 42, 164 % 42, 165 % 42, 166 % 42, 167 % 42, 168 % 42, 169 % 42,
- 170 % 42, 171 % 42, 172 % 42, 173 % 42, 174 % 42, 175 % 42, 176 % 42, 177 % 42, 178 % 42, 179 % 42,
- 180 % 42, 181 % 42, 182 % 42, 183 % 42, 184 % 42, 185 % 42, 186 % 42, 187 % 42, 188 % 42, 189 % 42,
- 190 % 42, 191 % 42, 192 % 42, 193 % 42, 194 % 42, 195 % 42, 196 % 42, 197 % 42, 198 % 42, 199 % 42,
- 200 % 42, 201 % 42, 202 % 42, 203 % 42, 204 % 42, 205 % 42, 206 % 42, 207 % 42, 208 % 42, 209 % 42,
- 210 % 42, 211 % 42, 212 % 42, 213 % 42, 214 % 42, 215 % 42, 216 % 42, 217 % 42, 218 % 42, 219 % 42,
- 220 % 42, 221 % 42, 222 % 42, 223 % 42, 224 % 42, 225 % 42, 226 % 42, 227 % 42, 228 % 42, 229 % 42,
- 230 % 42, 231 % 42, 232 % 42, 233 % 42, 234 % 42, 235 % 42, 236 % 42, 237 % 42, 238 % 42, 239 % 42,
- 240 % 42, 241 % 42, 242 % 42, 243 % 42, 244 % 42, 245 % 42, 246 % 42, 247 % 42, 248 % 42, 249 % 42,
- 250 % 42, 251 % 42, 252 % 42, 253 % 42, 254 % 42, 255 % 42
-};
-*/
+
 const mk61ROM_t ROM = {
         IK1302: {
                 microinstructions: {
@@ -446,9 +419,9 @@ const uint8_t* IK1303_M_START = &ringM[OFFSET_IK1303/*252+42+42+42*/];
 const uint8_t* IK1306_M_START = &ringM[OFFSET_IK1306/*252+42+42+42+42*/];
 
 IK1302 m_IK1302;
-uint16_t IK1302_uI_hi;         // Instruction HI word
-IK1303 m_IK1303;
-
+IK1302 m_IK1303;
+IK1302 m_IK1306;
+/*
 const uint8_t IK1302_DCW[68] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x02, 0x00, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -480,7 +453,7 @@ const uint8_t IK1306_DCW[68] = {
   0x02, 0x02, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x02, 0x02, 0x00,
   0x02, 0x02, 0x00, 0x00
 };
-
+*/
 const uint8_t IK1302_AND_AMK[1152] = {
 0x00, 0x00, 0x00, 0x10, 0x03, 0x1D, 0x00, 0x07, 0x1E, 0x10, 0x03, 0x1C, 0x0B, 0x07, 0x0C, 0x1E,
 0x00, 0x00, 0x15, 0x18, 0x09, 0x16, 0x18, 0x09, 0x16, 0x18, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -706,8 +679,6 @@ const uint8_t IK1306_AND_AMK[1152] = {
   0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42
 };
 
-IK1306 m_IK1306;
-
 #define CycleE(J_signal_I) \
         IK1302_Tick(signal_I, J_signal_I); \
         IK1303_Tick(signal_I, J_signal_I); \
@@ -722,10 +693,10 @@ IK1306 m_IK1306;
 
 #ifdef out_dump
 
-uint16_t step = 0;
+uint16_t  step = 0;
 
-void dumpm(uint16_t sig, uint16_t cyc){
-uint16_t i;
+void  dumpm(uint16_t sig, uint16_t cyc) {
+  uint16_t i;
         printf("st %2.2d cy %3.3d si %2.2d\n(%d,%d)1302 R dump:\n",step,cyc,sig,IK1302_key_x,IK1302_key_y);
         for(i=0;i<42;i++){
                 if((i % 15) == 0) printf("\n%2.2X ", i);
@@ -828,15 +799,15 @@ inline  usize __attribute__((always_inline))  IK1306_GoZero(void) {
   return uI_hi & 0xFF;
 }
 
-void cycle(void) {
+void  cycle(void) {
   mtick_t signal_I;
   const int MAX_CYCLE = (sergey_anvarov_hack_enable)? 280 : 560;
   for (int count = 1; count <= MAX_CYCLE; count++){
       signal_I = 0;
 
-      const usize IK1302_uI_hi = IK1302_GoZero();
+      const usize IK1302_uI_hi = IK1302_GoZero(); 
 
-      dbghexln(CORE61, "IK1302.IP = 0x", (u16) m_IK1302.R[36] + 16 * (u16) m_IK1302.R[39]);
+      dbgtrace(CORE61, "IK1302.IP = 0x", m_IK1302.R[39]*16 + m_IK1302.R[36]);
 
       const usize IK1303_uI_hi = IK1303_GoZero();
       const usize IK1306_uI_hi = IK1306_GoZero();
@@ -954,15 +925,16 @@ void cycle(void) {
                    m_IK1306.pM = &ringM[0];
           }
   }
-#ifdef out_dump
-  step++;
-#endif
+  #ifdef out_dump
+    step++;
+  #endif
 }
 
-extern "C" void mi2_exec(IK1302& dev, mtick_t _I, int idx);
+extern  "C" void mi2_exec(IK1302& dev, mtick_t _I, int idx);
+extern  "C" void mi3_exec(IK1302& dev, mtick_t _I, int idx);
+extern  "C" void mi6_exec(IK1302& dev, mtick_t _I, int idx);
 
-void IK1302_Tick(mtick_t signal_I, usize J_signal_I)
-{
+void  IK1302_Tick(mtick_t signal_I, usize J_signal_I) {
  uint32_t  microinstruction;
  uint32_t  val, tmp;
  uint32_t  mi_hi;
@@ -979,160 +951,24 @@ void IK1302_Tick(mtick_t signal_I, usize J_signal_I)
   return;
 }
 
-void IK1303_Tick(mtick_t signal_I, usize J_signal_I)
-{
- uint32_t tmp;
- uint32_t microinstruction;
- uint32_t mi_hi;
+void  IK1303_Tick(mtick_t signal_I, usize J_signal_I) {
+  uint32_t tmp;
+  uint32_t microinstruction;
+  uint32_t mi_hi;
 
- tmp = (uint8_t) m_IK1303.pAND_AMK[J_signal_I];
- if (tmp > 59 && m_IK1303.L == 0){ // Если AMK больше 59 (60,61,62,63), то пересчитываются (60,62,64,66) или (61,63,65,67) при L=0
-      tmp++;
- }
-
- microinstruction = ROM.IK1303.microinstructions[tmp];
- m_IK1303.AMK = tmp;
-
- mi_hi = (microinstruction >> 16);
-//---------------------------------------------------------
- if((((microinstruction >> 24) & 0x03) == 0x2) || (((microinstruction >> 24) & 0x03) == 0x3)) {
-     if (div3_table[signal_I] != m_IK1303.key_xm) {
-         // TODO remove if (m_IK1303.key_y > 0)
-         m_IK1303.S1 |= m_IK1303.key_y;
-     }
- }
-//---------------------------------------------------------
-   io_t alpha = 0;
-   io_t gamma = 0;
-   io_t sigma = 0;
-   if((microinstruction & 0x7FFF) != 0){
-
-        switch(microinstruction & 0x007F){
-                case 0x0001: alpha = m_IK1303.R[signal_I]; break;
-                case 0x0002: alpha = m_IK1303.pM[signal_I]; break;
-                case 0x0004: alpha = m_IK1303.ST[signal_I]; break;
-                case 0x0008: alpha = ~m_IK1303.R[signal_I] & 0xf; break;
-                case 0x0009: alpha = 0xf; break;
-                case 0x0010: if (m_IK1303.L == 0) alpha = 0xa; else alpha = 0; break;
-                case 0x0020: alpha = m_IK1303.S; break;
-                case 0x0040: alpha = 4; break;
-                case 0: alpha = 0;
-        }
-
-        if((microinstruction & 0x0F80) != 0){
-          switch(microinstruction & 0x0F80){
-                case 0x0800: alpha += 1; break;
-                case 0x0400: alpha += 6; break;
-                case 0x0C00: alpha += 1|6; break;
-                case 0x0080: alpha += m_IK1303.S; break;
-                case 0x0100: alpha += ~m_IK1303.S & 0xf; break;
-                case 0x0200: alpha += m_IK1303.S1; break;
-                case 0x0180: alpha += 0xf; break;
-                case 0x0280: alpha += m_IK1303.S | m_IK1303.S1; break;
-                case 0x0500: alpha += 6 | (~m_IK1303.S & 0xf); break;
-          }
+    tmp = (uint8_t) m_IK1303.pAND_AMK[J_signal_I];
+    if (tmp > 59 && m_IK1303.L == 0){ // Если AMK больше 59 (60,61,62,63), то пересчитываются (60,62,64,66) или (61,63,65,67) при L=0
+        tmp++;
     }
-   //---------------------------------------------------------
-        if (m_IK1303.flag_FC > 0){
-                if (m_IK1303.key_y == 0) m_IK1303.T = 0;
-        }
-        else{
-                tmp = div3_table[signal_I];
-                if (tmp == m_IK1303.key_xm)
-                        if (m_IK1303.key_y > 0) {
-                                m_IK1303.S1 = m_IK1303.key_y;
-                                m_IK1303.T = 1;
-                        }
-                if (tmp < 12) if (m_IK1303.L > 0)  m_IK1303.comma = tmp;
-        }
-   //---------------------------------------------------------
-        if((microinstruction & 0x4000) != 0) gamma = m_IK1303.T ^ 1; else gamma = 0;
-        if((microinstruction & 0x2000) != 0) gamma |= m_IK1303.L ^ 1;
-        if((microinstruction & 0x1000) != 0) gamma |= m_IK1303.L;
 
-        alpha +=gamma;
-        sigma = alpha & 0xf;
-        m_IK1303.P = alpha >> 4;
-   }
-   else{
-     //---------------------------------------------------------
-        if (m_IK1303.flag_FC > 0){
-                if (m_IK1303.key_y == 0) m_IK1303.T = 0;
-        }
-        else{
-                tmp = div3_table[signal_I];
-                if (tmp == m_IK1303.key_xm)
-                        if (m_IK1303.key_y > 0) {
-                                m_IK1303.S1 = m_IK1303.key_y;
-                                m_IK1303.T = 1;
-                        }
-                if (tmp < 12) if (m_IK1303.L > 0)  m_IK1303.comma = tmp;
-        }
-   //---------------------------------------------------------
-        sigma = 0;
-        m_IK1303.P = 0;
-   }
-#ifdef out_dump
-printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_IK1303.AMK, microinstruction, m_IK1303.MOD, m_IK1303.S, m_IK1303.S1, sigma);
-#endif
-//---------------------------------------------------------
-    if (m_IK1303.MOD == 0 || signal_I >= 36)
-    {
-        tmp = IK1303_DCW[m_IK1303.AMK];
-                if(tmp != 0){
-          switch (tmp)
-          {
-            case 1: m_IK1303.R[signal_I] = m_IK1303.R[mod42_table[signal_I + 3]]; break;
-            case 2: m_IK1303.R[signal_I] = sigma; break;
-            case 3: m_IK1303.R[signal_I] = m_IK1303.S; break;
-            case 4: m_IK1303.R[signal_I] = m_IK1303.R[signal_I] | m_IK1303.S | sigma; break;
-            case 5: m_IK1303.R[signal_I] = m_IK1303.S | sigma; break;
-            case 6: m_IK1303.R[signal_I] = m_IK1303.R[signal_I] | m_IK1303.S; break;
-            case 7: m_IK1303.R[signal_I] = m_IK1303.R[signal_I] | sigma; break;
-          }
-                }
+    microinstruction = ROM.IK1303.microinstructions[tmp];
+    m_IK1303.AMK = tmp;
 
-        if ((mi_hi & 0x0004) !=0)    m_IK1303.R[mod42_table[signal_I + 41]] = sigma;
-        if ((mi_hi & 0x0008) !=0)    m_IK1303.R[mod42_table[signal_I + 40]] = sigma;
-    }
-    if ((mi_hi & 0x0020) !=0)        m_IK1303.L = m_IK1303.P & 1;
-    if ((mi_hi & 0x0010) !=0)        m_IK1303.pM[signal_I] = m_IK1303.S;
-//---------------------------------------------------------
-
-        if((mi_hi & 0x0040) == 0){
-         // 6 bit == 0, может быть 7 бит не равен?
-          if((mi_hi & 0x0080) != 0)  m_IK1303.S = sigma; // 7 bit == 1
-        }
-        else{
-         // 6 bit == 1, может быть 7 бит тоже равен?
-          m_IK1303.S = m_IK1303.S1;
-          if((mi_hi & 0x0080) != 0) m_IK1303.S |= sigma;
-        }
-
-         // 6 bit == 0, нам пофиг на состояние 7 бита
-        if((mi_hi & 0x0100) != 0){
-         // 6 bit == 1, может быть 7 бит тоже равен?
-          if((mi_hi & 0x0200) != 0) m_IK1303.S1 |= sigma; else m_IK1303.S1 = sigma;
-        }
-//----------------------------------------------------------
-    mi_hi = mi_hi & 0x0C00;
-    if(mi_hi != 0){
-          if(mi_hi == 0x0400){
-                    m_IK1303.ST[mod42_table[signal_I + 2]] = m_IK1303.ST[mod42_table[signal_I + 1]];
-                    m_IK1303.ST[mod42_table[signal_I + 1]] = m_IK1303.ST[signal_I];
-                    m_IK1303.ST[signal_I] = sigma;
-          }
-          else if(mi_hi == 0x0800){
-                    tmp = m_IK1303.ST[signal_I];
-                    m_IK1303.ST[signal_I] = m_IK1303.ST[mod42_table[signal_I + 1]];
-                    m_IK1303.ST[mod42_table[signal_I + 1]] = m_IK1303.ST[mod42_table[signal_I + 2]];
-                    m_IK1303.ST[mod42_table[signal_I + 2]] = tmp;
-          }
-    }
+  mi3_exec(m_IK1303, signal_I, tmp);
+  return;
 }
 
-void IK1306_Tick(mtick_t signal_I, usize J_signal_I)
-{
+void  IK1306_Tick(mtick_t signal_I, usize J_signal_I) {
     uint32_t tmp, mi_hi;
     uint32_t microinstruction;
 
@@ -1142,115 +978,10 @@ void IK1306_Tick(mtick_t signal_I, usize J_signal_I)
     }
     microinstruction = ROM.IK1306.microinstructions[tmp];
     m_IK1306.AMK = tmp;
-
-
-    mi_hi = (microinstruction >> 16);
-//---------------------------------------------------------
-    io_t alpha = 0;
-    io_t gamma = 0;
-    io_t sigma = 0;
-    if((microinstruction & 0x3FFF) != 0){
-        switch(microinstruction & 0x007F) {
-                case 0x0001: alpha = m_IK1306.R[signal_I]; break;
-                case 0x0002: alpha = m_IK1306.pM[signal_I]; break;
-                case 0x0004: alpha = m_IK1306.ST[signal_I]; break;
-                case 0x0005: alpha = m_IK1306.ST[signal_I] | m_IK1306.R[signal_I]; break;
-                case 0x0008: alpha = ~m_IK1306.R[signal_I] & 0xf; break;
-                case 0x0009: alpha = 0xf; break;
-                case 0x0010: if(m_IK1306.L == 0) alpha = 0xa; else alpha = 0; break;
-                case 0x0020: alpha = m_IK1306.S; break;
-                case 0x0021: alpha = m_IK1306.S | m_IK1306.R[signal_I]; break;
-                case 0x0028: alpha = m_IK1306.S | (~m_IK1306.R[signal_I] & 0xf); break;
-                case 0x0040: alpha = 4; break;
-                case 0: alpha = 0;
-        }
-
-        if((microinstruction & 0x0F80) != 0) {
-           switch(microinstruction & 0x0F80) {
-             case 0x0800: alpha += 1; break;
-             case 0x0400: alpha += 6; break;
-             case 0x0C00: alpha += 1|6; break;
-             case 0x0080: alpha += m_IK1306.S; break;
-             case 0x0100: alpha += ~m_IK1306.S & 0xf; break;
-             case 0x0200: alpha += m_IK1306.S1; break;
-             case 0x0180: alpha += m_IK1306.S | (~m_IK1306.S & 0xf); break;
-           }
-        }
- //---------------------------------------------------------
-     if((microinstruction & 0x2000) != 0) gamma = m_IK1306.L ^ 1; else gamma=0;
-     if((microinstruction & 0x1000) != 0) gamma |= m_IK1306.L;
-
-     alpha += gamma;
-     sigma = alpha & 0xf;
-     m_IK1306.P = alpha >> 4;
-    }
-    else{
-            sigma = 0;
-           m_IK1306.P = 0;
-    }
-#ifdef out_dump
-printf("AMK %4.4X, microinstruction: %8.8X, MOD %u, S %u, S1 %u, sigma %u\n", m_IK1306.AMK, microinstruction, IK1306_MOD, IK1306_S, IK1306_S1, sigma);
-#endif
-//---------------------------------------------------------
-    if (m_IK1306.MOD == 0 || signal_I >= 36)
-    {
-        tmp = IK1306_DCW[m_IK1306.AMK];
-        if(tmp != 0){
-          switch (tmp){
-            case 1: m_IK1306.R[signal_I] = m_IK1306.R[mod42_table[signal_I + 3]]; break;
-            case 2: m_IK1306.R[signal_I] = sigma; break;
-            case 3: m_IK1306.R[signal_I] = m_IK1306.S; break;
-            case 4: m_IK1306.R[signal_I] = m_IK1306.R[signal_I] | m_IK1306.S | sigma; break;
-            case 5: m_IK1306.R[signal_I] = m_IK1306.S | sigma; break;
-            case 6: m_IK1306.R[signal_I] = m_IK1306.R[signal_I] | m_IK1306.S; break;
-            case 7: m_IK1306.R[signal_I] = m_IK1306.R[signal_I] | sigma; break;
-          }
-        }
-
-        if ((mi_hi & 0x0004) !=0)    m_IK1306.R[mod42_table[signal_I + 41]] = sigma;
-        if ((mi_hi & 0x0008) !=0)    m_IK1306.R[mod42_table[signal_I + 40]] = sigma;
-    }
-    if ((mi_hi & 0x0020) !=0)        m_IK1306.L = m_IK1306.P & 1;
-    if ((mi_hi & 0x0010) !=0)        m_IK1306.pM[signal_I] = m_IK1306.S;
-//---------------------------------------------------------
-
-    if((mi_hi & 0x0040) == 0){
-      // 6 bit == 0, может быть 7 бит не равен?
-      if((mi_hi & 0x0080) != 0)  m_IK1306.S = sigma; // 7 bit == 1
-    }
-    else{
-      // 6 bit == 1, может быть 7 бит тоже равен?
-      m_IK1306.S = m_IK1306.S1;
-      if((mi_hi & 0x0080) != 0) m_IK1306.S |= sigma;
-    }
-
-    // 6 bit == 0, нам пофиг на состояние 7 бита
-    if((mi_hi & 0x0100) != 0){
-      // 6 bit == 1, может быть 7 бит тоже равен?
-      if((mi_hi & 0x0200) != 0) m_IK1306.S1 |= sigma; else m_IK1306.S1 = sigma;
-    }
-//----------------------------------------------------------
-    mi_hi = mi_hi & 0x0C00;
-    if(mi_hi != 0){
-          if(mi_hi == 0x0400){
-                    m_IK1306.ST[mod42_table[signal_I + 2]] = m_IK1306.ST[mod42_table[signal_I + 1]];
-                    m_IK1306.ST[mod42_table[signal_I + 1]] = m_IK1306.ST[signal_I];
-                    m_IK1306.ST[signal_I] = sigma;
-          }
-          else if(mi_hi == 0x0800){
-                    tmp = m_IK1306.ST[signal_I];
-                    m_IK1306.ST[signal_I] = m_IK1306.ST[mod42_table[signal_I + 1]];
-                    m_IK1306.ST[mod42_table[signal_I + 1]] = m_IK1306.ST[mod42_table[signal_I + 2]];
-                    m_IK1306.ST[mod42_table[signal_I + 2]] = tmp;
-          }
-    }
+    mi6_exec(m_IK1306, signal_I, tmp);
+  return;
 }
 
-/**
- * mk61emu
- */
-
-//uint8_t IK1302_DCWA[68];
 inline  void  __attribute__((always_inline))  IK1302_Clear(void) {
     const usize size_IK1302 = sizeof(m_IK1302);
     dbgln(CORE61, "cleared IK1302 size = ", size_IK1302);

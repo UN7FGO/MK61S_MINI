@@ -4,6 +4,25 @@
 
 namespace dbg {
 
+void  core_trace(const char* text, usize value) {
+  static  isize back_value = -1;
+  static  isize repeat_counter = 0;
+
+  if(back_value == value) {
+    repeat_counter++;
+  } else {
+    if(repeat_counter == 0) {
+      if(back_value >= 0) dbg::print("\n\r");
+      dbg::printhex(text, value);
+    } else {
+      dbg::println(" (",  repeat_counter + 1, ")");
+      dbg::printhex(text, value);
+      repeat_counter = 0;
+    }
+  }
+  back_value = value;
+}
+
 void print(const char* text) {
     Serial.print(text);
 }
@@ -62,6 +81,13 @@ void printhex(const char* text, const isize var) {
     Serial.print(text); 
     if(var < 0x10) Serial.write('0');
     Serial.print(var, HEX);
+}
+
+void printhex(const char* text_0, const isize var, const char* text_1) {
+    Serial.write(text_0); 
+    if(var < 0x10) Serial.write('0'); 
+    Serial.print(var, HEX); 
+    Serial.print(text_1); 
 }
 
 void printhexln(const usize var) {

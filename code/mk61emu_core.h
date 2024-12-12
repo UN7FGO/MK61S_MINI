@@ -116,8 +116,6 @@ typedef mk61_register_position_t mk61_register_t[MK61_REGISTER_POSITIONS_COUNT];
 typedef struct{
     uint32_t AMK;
 
-    uint32_t  key_y, key_x, key_xm;
-    uint32_t  displayed;
     uint32_t  comma;
     uint32_t  L, S, S1, P, T, MOD, flag_FC;
 
@@ -127,8 +125,12 @@ typedef struct{
     uint8_t*  pAND_AMK1;                            // Precalc offset from microprograms for signal_I 27..35
     uint8_t*  pAND_AMK;
     uint8_t*  pM;
-}  IK1302;
+    
+    uint32_t  key_y, key_x, key_xm;
+    uint32_t  displayed;
+}  IK130x_t;
 
+typedef IK130x_t IK1302;
 /**
  * @brief The MK61 emulator object
  */
