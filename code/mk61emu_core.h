@@ -29,19 +29,21 @@
 #include <stdbool.h>
 
 #ifdef EXPAND_RING_MK61
-  //                                        IR1   IR2  IKF  1302 1303 1306
-  static constexpr  usize   SIZE_RING_M   = 252 + 252 + 42 + 42 + 42 + 42;
-  //                                        IR1  IKF  1302 1303 1306
-  static constexpr  usize   OFFSET_IK1302 = 252 + 42 + 42;
-  static constexpr  usize   OFFSET_IK1303 = 252 + 42 + 42 + 42;
-  static constexpr  usize   OFFSET_IK1306 = 252 + 42 + 42 + 42 + 42;
+  //                                              IR1   IR2  IKF  1302 1303 1306
+  static constexpr  usize   SIZE_RING_M         = 252 + 252 + 42 + 42 + 42 + 42;
+  //                                              IR1  IKF  1302 1303 1306
+  static constexpr  usize   OFFSET_IK1302       = 252 + 42 + 42;
+  static constexpr  usize   OFFSET_IK1303       = 252 + 42 + 42 + 42;
+  static constexpr  usize   OFFSET_IK1306       = 252 + 42 + 42 + 42 + 42;
+  static constexpr  usize   MK61_LAST_PRG_STEP  = 105 + 7;
 #else
-  //                                        IR1   IR2  1302 1303 1306
-  static constexpr  usize   SIZE_RING_M   = 252 + 252 + 42 + 42 + 42;
-  //                                        IR1  1302 1303 1306
-  static constexpr  usize   OFFSET_IK1302 = 252 + 42;
-  static constexpr  usize   OFFSET_IK1303 = 252 + 42 + 42;
-  static constexpr  usize   OFFSET_IK1306 = 252 + 42 + 42 + 42;
+  //                                              IR1   IR2  1302 1303 1306
+  static constexpr  usize   SIZE_RING_M         = 252 + 252 + 42 + 42 + 42;
+  //                                              IR1  1302 1303 1306
+  static constexpr  usize   OFFSET_IK1302       = 252 + 42;
+  static constexpr  usize   OFFSET_IK1303       = 252 + 42 + 42;
+  static constexpr  usize   OFFSET_IK1306       = 252 + 42 + 42 + 42;
+  static constexpr  usize   MK61_LAST_PRG_STEP  = 105;
 #endif
 
 namespace ring_M {
@@ -147,7 +149,8 @@ extern  IK1302  m_IK1302;
 extern  u8      ringM[SIZE_RING_M];
 
 namespace core_61 {
-  
+  static constexpr  usize LAST_PROGRAM_STEP = MK61_LAST_PRG_STEP;
+
   inline    isize get_ring_address(isize linear_address) {
     const isize cycle_x = ((linear_address % 7) == 0)?  linear_address : (linear_address - 7);
     return 41 + cycle_x * 6;
@@ -161,6 +164,10 @@ namespace core_61 {
 
   inline    bool  is_displayed(void)    { return (m_IK1302.displayed != 0); }
   inline    usize comma_position(void)  { return m_IK1302.comma; }
+
+  extern    usize len_code_command(u8 cod);
+  extern    void  set_code_page(uint8_t* page);
+  extern    void  get_code_page(uint8_t* page);
 
   extern    void  enable(void);
   extern    void  step(void);
@@ -199,7 +206,7 @@ bool    MK61Emu_IsRunning(void);
 
 void    MK61Emu_SetCode(int addr, uint8_t data);
 uint8_t MK61Emu_GetCode(int addr);
-void    MK61Emu_GetCodePage(uint8_t* page);
+//void    MK61Emu_GetCodePage(uint8_t* page);
 void    MK61Emu_ClearCodePage(void);
 
 const char* MK61Emu_GetIndicatorStr(const char* display_symbols);

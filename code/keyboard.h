@@ -18,6 +18,7 @@ namespace kbd {
   inline  i32     last_key(void)    { return  cir_buff_get(0); }
   inline  i32     get_key(void)     { return  cir_buff_read(); }
 
+  extern  void    test(void);
   extern  void    debounce_init(void);
   extern  void    init(void);
   extern  i32     get_key(key_state state);

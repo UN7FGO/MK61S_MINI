@@ -1,3 +1,4 @@
+#include "wiring_constants.h"
 #include "keyboard.h"
 #include "tools.hpp"
 #include "debug.h"
@@ -19,6 +20,20 @@ static constexpr t_time_ms  KEY_HOLD_MS       =   1500;  // константны
 extern void idle_main_process(void);
 extern void event_hold_key(i32 holded_key, i32 hold_quant);
 extern void event_unhold_key(i32 unholded_key);
+
+inline void scan_out(usize data) {
+  for(int pin : scan_pins) { 
+    digitalWrite(pin, data & 1);
+    data >>= 1;
+  }
+}
+
+inline void bus_out(usize data) {
+  for(int pin : data_pins) { 
+    digitalWrite(pin, data & 1);
+    data >>= 1;
+  }
+}
 
 inline usize bus_in(void) {
   usize input_data = 0;
@@ -182,6 +197,33 @@ void  init(void) {
   cir_buff::Init();
 
   debounce_init();
+}
+
+void  test(void) {
+  dbgln(KBD, "test kbd. ");
+  for(usize pin : data_pins) {
+    //if(pin != 29) {
+      pinMode(pin, OUTPUT); digitalWrite(pin, HIGH);
+      dbghexln(KBD, "output kbd.data <- ", pin, ", kbd.data=", digitalRead(bus_in()));
+      digitalWrite(pin, LOW); pinMode(pin, INPUT_PULLDOWN);
+      delay(240);
+    //}
+  }
+/*
+  for(usize pin : data_pins) pinMode(pin, INPUT_PULLDOWN);
+  for(usize pin : scan_pins) pinMode(pin, INPUT);
+  isize i = 0;
+  for(usize pin : scan_pins) {
+    pinMode(pin, OUTPUT); 
+    digitalWrite(pin, LOW);
+    dbghex(KBD, (const char*) "kbd.scan_line[", i++, (const char*) "] LOW, kbd.data=", digitalRead(bus_in()));
+    digitalWrite(pin, HIGH);
+    dbghex(KBD, " HIGH, kbd.data=", digitalRead(bus_in()));
+    pinMode(pin, INPUT); 
+    dbghexln(KBD, " hi-Z, kbd.data=", digitalRead(bus_in()));
+    delay(40);
+  }
+*/  
 }
 
 isize scan(void) {

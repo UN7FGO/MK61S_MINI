@@ -55,6 +55,23 @@ extern  void DFU_enable(void);
 
 static u8    input_buffer[MAX_INPUT_CHAR];
 
+const char ISA_61[] = 
+"0,1,2,3,4,5,6,7,8,9,dot,neg,pow10,clr,push,preX,\
+add,sub,mul,div,swap,e10,exp,lg,ln,asin,acos,atg,sin,cos,tg,?,\
+pi,sqrt,sqr,rec,pow,rot,toM,?,?,?,toMS,?,?,?,?,?,\
+inMS,mod,sgn,inM,int,frc,max,and,or,xor,not,rnd,?,?,?,?,\
+sto0,sto1,sto2,sto3,sto4,sto5,sto6,sto7,sto8,sto9,stoA,stoB,stoC,stoD,stoE,?,\
+hlt,jmp,ret,call,nop,?,?,jz,rpt2,jl,rpt3,rpt1,jme,rpt0,jnz,?,\
+ld0,ld1,ld2,ld3,ld4,ld5,ld6,ld7,ld8,ld9,ldA,ldB,ldC,ldD,ldE,?,\
+jz[0],jz[1],jz[2],jz[3],jz[4],jz[5],jz[6],jz[7],jz[8],jz[9],jz[A],jz[B],jz[C],jz[D],jz[E],?,\
+jmp[0],jmp[1],jmp[2],jmp[3],jmp[4],jmp[5],jmp[6],jmp[7],jmp[8],jmp[9],jmp[A],jmp[B],jmp[C],jmp[D],jmp[E],?,\
+jlz[0],jlz[1],jlz[2],jlz[3],jlz[4],jlz[5],jlz[6],jlz[7],jlz[8],jlz[9],jlz[A],jlz[B],jlz[C],jlz[D],jlz[E],?,\
+call[0],call[1],call[2],call[3],call[4],call[5],call[6],call[7],call[8],call[9],call[A],call[B],call[C],call[D],call[E],?,\
+sto[0],sto[1],sto[2],sto[3],sto[4],sto[5],sto[6],sto[7],sto[8],sto[9],sto[A],sto[B],sto[C],sto[D],sto[E],?,\
+jme[0],jme[1],jme[2],jme[3],jme[4],jme[5],jme[6],jme[7],jme[8],jme[9],jme[A],jme[B],jme[C],jme[D],jme[E],?,\
+ld[0],ld[1],ld[2],ld[3],ld[4],ld[5],ld[6],ld[7],ld[8],ld[9],ld[A],ld[B],ld[C],ld[D],ld[E],?,\
+jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jnz[B],jnz[C],jnz[D],jnz[E]";
+
 class class_terminal {
   private:
     enum class mnemo_type {ISA_61, ISA_CLASSIC};
@@ -74,23 +91,6 @@ KX->\3170,KX->\3171,KX->\3172,KX->\3173,KX->\3174,KX->\3175,KX->\3176,KX->\3177,
 Kx<0 0,Kx<0 1,Kx<0 2,Kx<0 3,Kx<0 4,Kx<0 5,Kx<0 6,Kx<0 7,Kx<0 8,Kx<0 9,Kx<0 A,Kx<0 B,Kx<0 C,Kx<0 \304,Kx<0 E,?,\
 K\317->X0,K\317->X1,K\317->X2,K\317->X3,K\317->X4,K\317->X5,K\317->X6,K\317->X7,K\317->X8,K\317->XA,K\317->XB,K\317->XC,K\317->X\304,K\317->XE,?,\
 Kx=0 0,Kx=0 1,Kx=0 2,Kx=0 3,Kx=0 4,Kx=0 5,Kx=0 6,Kx=0 7,Kx=0 8,Kx=0 9,Kx=0 A,Kx=0 B,Kx=0 C,Kx=0 \304,Kx=0 E,?";
-
-    const char ISA_61[1259] = 
-"0,1,2,3,4,5,6,7,8,9,dot,neg,pow10,clr,push,preX,\
-add,sub,mul,div,swap,e10,exp,lg,ln,asin,acos,atg,sin,cos,tg,?,\
-pi,sqrt,sqr,rec,pow,rot,toM,?,?,?,toMS,?,?,?,?,?,\
-inMS,mod,sgn,inM,int,frc,max,and,or,xor,not,rnd,?,?,?,?,\
-sto0,sto1,sto2,sto3,sto4,sto5,sto6,sto7,sto8,sto9,stoA,stoB,stoC,stoD,stoE,?,\
-hlt,jmp,ret,call,nop,?,?,jz,rpt2,jl,rpt3,rpt1,jme,rpt0,jnz,?,\
-ld0,ld1,ld2,ld3,ld4,ld5,ld6,ld7,ld8,ld9,ldA,ldB,ldC,ldD,ldE,?,\
-jz[0],jz[1],jz[2],jz[3],jz[4],jz[5],jz[6],jz[7],jz[8],jz[9],jz[A],jz[B],jz[C],jz[D],jz[E],?,\
-jmp[0],jmp[1],jmp[2],jmp[3],jmp[4],jmp[5],jmp[6],jmp[7],jmp[8],jmp[9],jmp[A],jmp[B],jmp[C],jmp[D],jmp[E],?,\
-jlz[0],jlz[1],jlz[2],jlz[3],jlz[4],jlz[5],jlz[6],jlz[7],jlz[8],jlz[9],jlz[A],jlz[B],jlz[C],jlz[D],jlz[E],?,\
-call[0],call[1],call[2],call[3],call[4],call[5],call[6],call[7],call[8],call[9],call[A],call[B],call[C],call[D],call[E],?,\
-sto[0],sto[1],sto[2],sto[3],sto[4],sto[5],sto[6],sto[7],sto[8],sto[9],sto[A],sto[B],sto[C],sto[D],sto[E],?,\
-jme[0],jme[1],jme[2],jme[3],jme[4],jme[5],jme[6],jme[7],jme[8],jme[9],jme[A],jme[B],jme[C],jme[D],jme[E],?,\
-ld[0],ld[1],ld[2],ld[3],ld[4],ld[5],ld[6],ld[7],ld[8],ld[9],ld[A],ld[B],ld[C],ld[D],ld[E],?,\
-jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jnz[B],jnz[C],jnz[D],jnz[E]";
 
     isize   AT;
     u32     terminal_last_cmd;
@@ -127,6 +127,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
     static constexpr u32 T_DEL_SLOT     = 0x6C656473; // sdel
     static constexpr u32 T_RUN          = 0x006E7572; // run (F АВТ, В/О, С/П)
     static constexpr u32 T_ERASE_STORAGE= 0x61726573; // sera
+    static constexpr u32 T_INSERT_CMD   = 0x20736E69; // ins <шаг> <opcode>
 
     bool  not_EOF(void) {
       return recive_pos < MAX_INPUT_CHAR;
@@ -138,7 +139,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
 
     void list_mk61_code_page(void) {
       u8 code_page[106];
-      MK61Emu_GetCodePage(&code_page[0]);
+      core_61::get_code_page(&code_page[0]);
 
       for(int j = 0; j < 16; j++) {
         for(int i = j; i < 105; i += 16) {
@@ -160,7 +161,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
 
     void dump_mk61_code_page(void) {
       u8 code_page[106];
-      MK61Emu_GetCodePage(&code_page[0]);
+      core_61::get_code_page(&code_page[0]);
       isize j = 0;
       do {
         for(isize i = 0; i < 16; i++) {
@@ -268,14 +269,6 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       Serial.println(buff);
     }
 
-    u8    len_code_command(u8 cod) {
-      static const u8 values[10] = {81,83,87,88,89,90,91,92,93,94};
-      for (int i = 0; i<10; i++) {
-        if (cod == values[i] ) { return 2; }
-      }
-      return 1;
-    }
-
     void  print_address_as_MK61(usize addr) {
       if(addr > 99) {
         Serial.write('A');
@@ -312,31 +305,39 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
     }
 
     void  echo_ISA_61(void) {
-      static constexpr usize COLUMN_SIZE = 10;
+      static constexpr isize COLUMN_COUNT = 4;
+      static constexpr usize COLUMN_SIZE  = 10;
+      //                                                 1234567890
+      static const char EMPTY_COLUMN[COLUMN_SIZE + 1] = "          ";
+
       char* pMnemo = (char*) ISA_61;
       u8 opcode = 0;
-      isize column = 4;
-
-      do {
-        Serial_write_hex(opcode); Serial.write(' ');
-        const char* pMnemo_backup = pMnemo;
-        while(*pMnemo != ',') { Serial.write(*pMnemo); pMnemo++; }
-        if(column-- <= 0) {
-          column = 4;
-          Serial.println();
-        } else {
-          const usize len = pMnemo - pMnemo_backup;
-          for(usize i=0; i < COLUMN_SIZE - len; i++) Serial.write(' ');
+      usize begin = 0;
+      isize column = COLUMN_COUNT;
+      // Вывод в 4 колонки, в формате opcode - инструкция 
+      for(usize i=0; i < sizeof(ISA_61); i++) {
+        if(ISA_61[i] == ',' || ISA_61[i] == 0) { // обнаружен разделитель команд или окончание массива 
+          const isize len = i - begin;
+          Serial_write_hex(opcode); Serial.write(' '); Serial.write(&ISA_61[begin], len);
+          if(column-- <= 0) { // завершим вывод строки, все 4 колонки выведены
+            Serial.println();
+            column = COLUMN_COUNT;
+          } else { // завершим вывод колонки и дополним ее выводом пробелов
+            if(len < COLUMN_SIZE) 
+              Serial.print(&EMPTY_COLUMN[len]);
+            else
+              Serial.write(' ');
+          }
+          begin = i + 1;
+          opcode++;
         }
-        opcode++;
-      } while (*++pMnemo != 0);
-      Serial.println();
+      }
     }
 
     void pub_mk61_code_page(void) {
       char op[MAX_LEN_CLASSIC_MNEMO+1];
       u8 code_page[106];
-      MK61Emu_GetCodePage(&code_page[0]);
+      core_61::get_code_page(&code_page[0]);
       isize last_cmd_addr = seek_program_END(&code_page[0]);
       isize address = 0;     
       for (int i=0; i<30; i++) {
@@ -348,7 +349,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
             print_address_as_MK61(address); Serial.print(". ");  
 
             const u8 code = code_page[address];
-            if(address > 0 && len_code_command(code_page[address-1]) == 2) {
+            if(address > 0 && core_61::len_code_command(code_page[address-1]) == 2) {
               Serial_write_hex(code);
               for(usize cnt_space=2; cnt_space < MAX_LEN_CLASSIC_MNEMO + 2; cnt_space++) Serial.print(' ');
             } else {
@@ -366,7 +367,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       char op[7+1];
       u8 code_page[106];
 
-      MK61Emu_GetCodePage(&code_page[0]);
+      core_61::get_code_page(&code_page[0]);
       isize lastCommand = seek_program_END(&code_page[0]);
       isize j = 0;     
       for (isize i=0; i<30; i++) {
@@ -379,7 +380,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
             const u8 code2 = code_page[j+1];
             Serial.write(' '); Serial_write_hex(code); Serial.write(' ');
             if (j > 0){
-              if (len_code_command(code_page[j-1]) == 2) {
+              if (core_61::len_code_command(code_page[j-1]) == 2) {
                 Serial.print("      ");
               } else {
                 const char* mnemo = (type == mnemo_type::ISA_CLASSIC)? ISA_CLASSIC_61_code(code, &op[0]) : ISA_61_code(code, &op[0]);
@@ -391,7 +392,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
               Serial.print(mnemo); 
               for(usize ln=strlen(op); ln < 6; ln++) Serial.write(' '); 
             }            
-            if ( len_code_command(code) == 2 ) {
+            if ( core_61::len_code_command(code) == 2 ) {
               Serial_write_hex(code2); 
               Serial.print("  ");
             } else {
@@ -457,7 +458,7 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
 
     void  PutHexString(void) {
       u8 code_page[106];
-      MK61Emu_GetCodePage(&code_page[0]);
+      core_61::get_code_page(&code_page[0]);
       isize last_cmd_addr = seek_program_END(&code_page[0]);
       dbgln(MINI, "Last step in programm: ", last_cmd_addr);
       isize j = 0;
@@ -525,6 +526,19 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
       Serial.println();
     }
 
+    isize parse_token_as_dec(char* &buff) {
+      usize dec = 0;
+      while(*buff != 0 && *buff != ' ' && *buff != CR) {
+        const isize digit = DecimalDigit(*buff++);
+        if(digit < 0) {
+          Serial.print((char) buff[-1]); Serial.println(" - non decimal digit!");
+          return -1;
+        }
+        dec = dec*10 + digit;
+      }
+      return dec;
+    }
+
     isize parse_dec_numeric(char *buff) {
       usize dec = 0;
       while(*buff != 0 && *buff != ' ' && *buff != CR) {
@@ -536,6 +550,21 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
         dec = dec*10 + digit;
       }
       return dec;
+    }
+
+    isize parse_token_as_hex(char* &buff) {
+      usize hex = 0;
+
+      while(*buff != 0 && *buff != ' ' && *buff != CR) {
+        const isize digit = HexdecimalDigit(*buff++);
+        if(digit < 0) {
+          Serial.print((char) buff[-1]); Serial.println(" - non hexdecimal digit!");
+          return -1;
+        }
+        hex = hex*16 + digit;
+      }
+
+      return hex;
     }
 
     isize parse_hex_numeric(char* buff) {
@@ -774,6 +803,41 @@ jnz[0],jnz[1],jnz[2],jnz[3],jnz[R4],jnz[5],jnz[6],jnz[7],jnz[8],jnz[9],jnz[A],jn
           case  T_LASM:
               lasm_mk61_code_page(mnemo_type::ISA_61);
             break;
+          case  T_INSERT_CMD: { 
+            // 01234
+            // ins 10 20
+              char *args = (char*) &input_buffer[3];
+              while(*args == ' ') args++;
+              const usize into_step = parse_token_as_dec(args);
+              while(*args == ' ') args++;
+              const usize opcode = parse_token_as_hex(args);
+              dbgln(MINI, "Insert comand <", opcode, "> in program step ", into_step);
+              
+              u8 code_page[106];  
+              core_61::get_code_page(&code_page[0]);
+              
+              u8 move_code, copy_code = opcode;
+              bool inc_operand = false;
+              for(usize i = into_step; i < core_61::LAST_PROGRAM_STEP; i++) {
+                move_code = code_page[i];
+
+                if(inc_operand) {
+                  // необходима коррекция операнда предыдущей команды
+                  if(copy_code >= into_step) copy_code++;
+                  inc_operand = false;
+                } else { // рассматриваемое данное это команда, не операнд!
+                  if(core_61::len_code_command(copy_code) == 2) { 
+                    // установить необходимость коррекция второго операнда команды (адреса перехода)
+                      dbgln(MINI, "Step ", i, " 2 operand opcode: ", copy_code);
+                      inc_operand = true;
+                  }
+                }
+                code_page[i] = copy_code;
+                copy_code = move_code;
+              }
+              core_61::set_code_page(code_page);
+            break;
+          }
           case  T_STACK_OUTPUT:
               echo_mk61_stack();
             break;

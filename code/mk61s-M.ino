@@ -132,6 +132,7 @@ void setup() {
       init_external_flash();
   #endif
 
+//  kbd::test();
   kbd::init();
   
   #if defined(REVISION_V2) || defined(REVISION_V3)

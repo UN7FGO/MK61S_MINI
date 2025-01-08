@@ -6,8 +6,10 @@
 #include "mk61emu_core.h"
 #include "keyboard.h"
 #include "cross_hal.h"
-#include <SPI.h>
-#include <SPIFlash.h>
+#ifdef SPI_FLASH
+  #include <SPI.h>
+  #include <SPIFlash.h>
+#endif
 #include "menu.hpp"
 #include "config.h"
 #include "debug.h"

@@ -31,6 +31,10 @@ void print(char char_0, const char* text_0, char char_1, const char* text_1) {
     Serial.write(char_0); Serial.print(text_0); Serial.write(char_1); Serial.print(text_1); 
 }
 
+void print(const char* text_0, const isize var_0) {
+    Serial.print(text_0); Serial.print(var_0); 
+}
+
 void print(const char* text_0, const isize var_0, const char* text_1) {
     Serial.print(text_0); Serial.print(var_0); Serial.print(text_1); 
 }
@@ -90,6 +94,16 @@ void printhex(const char* text_0, const isize var, const char* text_1) {
     Serial.print(text_1); 
 }
 
+void printhex(const char* text_0, const isize var_0, const char* text_1, const isize var_1) {
+    Serial.write(text_0); 
+    if(var_0 < 0x10) Serial.write('0'); 
+    Serial.print(var_0, HEX); 
+
+    Serial.print(text_1); 
+    if(var_1 < 0x10) Serial.write('0'); 
+    Serial.print(var_1, HEX); 
+}
+
 void printhexln(const usize var) {
     if(var < 0x10) Serial.write('0');
     Serial.println(var, HEX);
@@ -105,6 +119,16 @@ void printhexln(const char* text_0, const isize var, const char* text_1) {
     if(var < 0x10) Serial.write('0');
     Serial.print(var, HEX);
     Serial.println(text_1);
+}
+
+void printhexln(const char* text_0, const isize var_0, const char* text_1, const isize var_1) {
+    Serial.print(text_0); 
+    if(var_0 < 0x10) Serial.write('0');
+    Serial.print(var_0, HEX);
+
+    Serial.print(text_1);
+    if(var_1 < 0x10) Serial.write('0');
+    Serial.println(var_1, HEX);
 }
 
 void printhexln(const char* text_0, const isize var_0, const char* text_1, const isize var_1, const char* text_2, const isize var_2) {
