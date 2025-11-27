@@ -4,7 +4,7 @@
 
 namespace dbg {
 
-void  core_trace(const char* text, usize value) {
+void  core_trace(const char* text, isize value) {
   static  isize back_value = -1;
   static  isize repeat_counter = 0;
 
@@ -109,19 +109,19 @@ void printhexln(const usize var) {
     Serial.println(var, HEX);
 }
 
-void printhexln(const char* text, const isize var) {
+void printhexln(const char* text, const usize var) {
     Serial.print(text); if(var < 0x10) Serial.write('0');
     Serial.println(var, HEX);
 }
 
-void printhexln(const char* text_0, const isize var, const char* text_1) {
+void printhexln(const char* text_0, const usize var, const char* text_1) {
     Serial.print(text_0); 
     if(var < 0x10) Serial.write('0');
     Serial.print(var, HEX);
     Serial.println(text_1);
 }
 
-void printhexln(const char* text_0, const isize var_0, const char* text_1, const isize var_1) {
+void printhexln(const char* text_0, const usize var_0, const char* text_1, const usize var_1) {
     Serial.print(text_0); 
     if(var_0 < 0x10) Serial.write('0');
     Serial.print(var_0, HEX);
@@ -131,7 +131,7 @@ void printhexln(const char* text_0, const isize var_0, const char* text_1, const
     Serial.println(var_1, HEX);
 }
 
-void printhexln(const char* text_0, const isize var_0, const char* text_1, const isize var_1, const char* text_2, const isize var_2) {
+void printhexln(const char* text_0, const usize var_0, const char* text_1, const usize var_1, const char* text_2, const usize var_2) {
     Serial.print(text_0); 
     if(var_0 < 0x10) Serial.write('0');
     Serial.print(var_0, HEX);
@@ -145,7 +145,7 @@ void printhexln(const char* text_0, const isize var_0, const char* text_1, const
     Serial.println(var_2, HEX);
 }
 
-void printhexln(const char* text_0, const isize var_0, const char* text_1, const isize var_1, const char* text_2, const isize var_2, const char* text_3, const isize var_3) {
+void printhexln(const char* text_0, const usize var_0, const char* text_1, const usize var_1, const char* text_2, const usize var_2, const char* text_3, const usize var_3) {
     Serial.print(text_0); 
     if(var_0 < 0x10) Serial.write('0');
     Serial.print(var_0, HEX);

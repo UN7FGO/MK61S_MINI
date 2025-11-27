@@ -41,9 +41,18 @@ class key_mnenonic {
     }
 
     void  build_mnemo(i32 keycode) {
+      static  constexpr u32 MK61_EXT_CMD_CAPTION = ('T' << 16) | ('X' << 8) | 'E';
+      extern  void      edit_extend_program(void);
+
       if(mnemo_pos == 0 || keycode == KEY_K || keycode == KEY_F) { // Первый вход в построение мнемокода нажатой набираемой функции
         clear_mnemo();
-        mnemo_pos = next_mnemo_pos(mnemo_code[keycode]);
+        if(keycode == KEY_USER_PRESS && core_61::edit_program) {
+          mnemo_pos = 0;
+          *((u32*) &mnemo_buffer[mnemo_pos]) = MK61_EXT_CMD_CAPTION;
+          edit_extend_program();
+        } else {
+          mnemo_pos = next_mnemo_pos(mnemo_code[keycode]);
+        }
       } else {
         switch(last_key) {
           case  KEY_F:
@@ -58,11 +67,13 @@ class key_mnenonic {
           case  KEY_K:
               mnemo_pos = next_mnemo_pos(mnemo_code_K[keycode]);
             break;
+          // П->x, x->П (#N)
           case  KEY_Px:
           case  KEY_xP:
               mnemo_buffer[mnemo_pos] = mnemo_code_register[keycode];
-              mnemo_pos = 0;
+              mnemo_pos = 0; // stop build
             break;
+          // ПП, БП, С/П, В/О, ШГ->, ШГ<- (#NN)
           case  KEY_PP:
           case  KEY_BP:
           case  KEY_RUN:
@@ -71,7 +82,7 @@ class key_mnenonic {
           case  KEY_BKW:
               mnemo_buffer[mnemo_pos] = mnemo_code_register[keycode];
               if(mnemo_pos > 2) { 
-                mnemo_pos = 0;
+                mnemo_pos = 0; // stop build
               } else {
                 mnemo_pos++;
                 return;

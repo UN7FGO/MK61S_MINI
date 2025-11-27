@@ -21,8 +21,10 @@ const  class_LCD_Label  DFU_message(0, 0);
 const  class_LCD_Label  STORE_message(0, 0);
 const  class_LCD_Label  STORE_progress_message(0, 1);
 
+const u32 ERASE_SECTOR_TIMEOUT = 5000; // таймаут операции стирания сектора ППЗУ в ms
+
 void DFU_enable(void) {
-	void (*SysMemBootJump)(void);
+    void (*SysMemBootJump)(void);
 
   lcd.clear();
   DFU_message.print(" DFU flash mode!");
@@ -65,15 +67,64 @@ void message_and_waitkey(const char* lcd_message) {
   led::off();
 }
 
+// Вставка команды opcode, в программу mk61s с шага step, с коррекцией команд с переходом по адресу перехода
+void  insert_cmd_in_program(usize into_step, usize opcode) {
+  u8 code_page[106];  
+
+  dbgln(MINI, "Insert comand <", opcode, "> in program step ", into_step);
+  
+  core_61::get_code_page(&code_page[0]);
+
+  bool  inc_operand = false;
+  u8    move_code, copy_code = opcode;
+
+  for(usize i = into_step; i < core_61::LAST_PROGRAM_STEP; i++) {
+    move_code = code_page[i];
+
+    if(inc_operand) {
+      // необходима коррекция операнда предыдущей команды
+      if(copy_code >= into_step) copy_code++;
+      inc_operand = false;
+    } else { // рассматриваемое данное это команда, не операнд!
+      if(core_61::len_code_command(copy_code) == 2) { 
+      // установить необходимость коррекция второго операнда команды (адреса перехода)
+        dbgln(MINI, "Step ", i, " 2 operand opcode: ", copy_code);
+        inc_operand = true;
+      }
+    }
+    code_page[i] = copy_code;
+    copy_code = move_code;
+  }
+  core_61::set_code_page(code_page);
+}
+
 SPIFlash  flash(PIN_SPIFLASH_CS);
 bool      flash_is_ok;
+
+bool erase_slot_old(usize nSlot) {
+  const isize segment_address = calc_address(nSlot);
+  if(segment_address < 0) return false;
+  
+  dbgln(SPIROM, "SPIFLASH: erase sector #", segment_address);
+  while (!flash.eraseSector(segment_address));
+  return true;
+}
 
 bool erase_slot(usize nSlot) {
   const isize segment_address = calc_address(nSlot);
   if(segment_address < 0) return false;
   
   dbgln(SPIROM, "SPIFLASH: erase sector #", segment_address);
-  while (!flash.eraseSector(segment_address));
+  
+  const u32 TimeIsOut = millis() + ERASE_SECTOR_TIMEOUT; // Запоминаем время начала
+  while (!flash.eraseSector(segment_address)) {
+    if (millis() >= TimeIsOut) { // Проверяем превышение таймаута
+      dbgln(SPIROM, "SPIFLASH: erase sector timeout!");
+      return false;
+    }
+    // Возможна короткая пауза для снижения нагрузки на процессор
+    // HAL_Delay(1); // Раскомментировать при необходимости
+  }
   return true;
 }
 
@@ -181,7 +232,7 @@ inline void store_word(isize segment_address, isize offset, u8 data) {
 
 inline bool check_empty_program(void) {
   usize all_to_or = 0;
-  for(isize i=0; i < 105; i++) all_to_or |= (usize) MK61Emu_GetCode(/*mk61s.*/core_61::get_ring_address(i));
+  for(isize i=0; i < 105; i++) all_to_or |= (usize) core_61::get_code(/*mk61s.*/core_61::get_ring_address(i));
   if(all_to_or == 0) {
     lcd.print("No program...");
     sound(PIN_BUZZER, 4000, 750);
@@ -201,7 +252,7 @@ char* ReadSlotName(usize nSlot, char* slot_name) {
     slot_name[i++] = symbol;
     if(symbol == 0) return slot_name;
   }
-  slot_name[16] = 0;
+  slot_name[SIZEOF_SLOT_NAME - 1] = 0;
   return slot_name;
 }
 
@@ -230,7 +281,18 @@ bool Rename(usize nSlot, char* slot_name) {
       u8 backup[1 + 105 + 168];
       for(usize i=0; i < sizeof(backup); i++) backup[i] = flash.readByte(segment_address + i);
       dbgln(SPIROM, "SPIFLASH: erase sector...");
-      while (!flash.eraseSector(segment_address));
+      //while (!flash.eraseSector(segment_address)); // Старая версия обращения для стирания сектора ППЗУ
+
+      const u32 TimeIsOut = millis() + ERASE_SECTOR_TIMEOUT; // Запоминаем время начала
+      while (!flash.eraseSector(segment_address)) {
+        if (millis() >= TimeIsOut) { // Проверяем превышение таймаута
+          dbgln(SPIROM, "SPIFLASH: erase sector timeout!");
+          return false;
+        }
+        // Возможна короткая пауза для снижения нагрузки на процессор
+        // HAL_Delay(1); // Раскомментировать при необходимости
+      }
+
       for(usize i=0; i < sizeof(backup); i++) flash.writeByte(segment_address + i, backup[i]);
     // запись имени слота  
       for(usize i=0; i < SIZEOF_SLOT_NAME; i++) {
@@ -259,7 +321,7 @@ bool Store(usize nSlot) {
   dbg(MINI, "Save ");
   store_word(address, OFFSET_FLAG_OCCUPIED, SLOT_OCCUPIED);
   for(isize i = 0; i < 105; i++){
-    const u8 mk61_prg_word = MK61Emu_GetCode(core_61::get_ring_address(i));
+    const u8 mk61_prg_word = core_61::get_code(core_61::get_ring_address(i));
     store_word(address, OFFSET_MK61_PROGRAMM + i, mk61_prg_word);
     dbg(MINI, "#");
   }
@@ -303,7 +365,7 @@ bool Store(void) {
 
   store_word(address, OFFSET_FLAG_OCCUPIED, SLOT_OCCUPIED);
   for(isize i = 0; i < 105; i++){
-    const u8 mk61_prg_word = MK61Emu_GetCode(core_61::get_ring_address(i));
+    const u8 mk61_prg_word = core_61::get_code(core_61::get_ring_address(i));
     store_word(address, OFFSET_MK61_PROGRAMM + i, mk61_prg_word);
     #ifdef SERIAL_OUTPUT
       Serial.write('#');

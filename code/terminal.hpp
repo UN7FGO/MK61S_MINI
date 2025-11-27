@@ -307,10 +307,7 @@ Kx=0 0,Kx=0 1,Kx=0 2,Kx=0 3,Kx=0 4,Kx=0 5,Kx=0 6,Kx=0 7,Kx=0 8,Kx=0 9,Kx=0 A,Kx=
     void  echo_ISA_61(void) {
       static constexpr isize COLUMN_COUNT = 4;
       static constexpr usize COLUMN_SIZE  = 10;
-      //                                                 1234567890
-      static const char EMPTY_COLUMN[COLUMN_SIZE + 1] = "          ";
 
-      char* pMnemo = (char*) ISA_61;
       u8 opcode = 0;
       usize begin = 0;
       isize column = COLUMN_COUNT;
@@ -323,10 +320,7 @@ Kx=0 0,Kx=0 1,Kx=0 2,Kx=0 3,Kx=0 4,Kx=0 5,Kx=0 6,Kx=0 7,Kx=0 8,Kx=0 9,Kx=0 A,Kx=
             Serial.println();
             column = COLUMN_COUNT;
           } else { // завершим вывод колонки и дополним ее выводом пробелов
-            if(len < COLUMN_SIZE) 
-              Serial.print(&EMPTY_COLUMN[len]);
-            else
-              Serial.write(' ');
+            for(usize space_counter = len; space_counter <= COLUMN_SIZE; space_counter++) Serial.write(' ');
           }
           begin = i + 1;
           opcode++;
@@ -811,6 +805,8 @@ Kx=0 0,Kx=0 1,Kx=0 2,Kx=0 3,Kx=0 4,Kx=0 5,Kx=0 6,Kx=0 7,Kx=0 8,Kx=0 9,Kx=0 A,Kx=
               const usize into_step = parse_token_as_dec(args);
               while(*args == ' ') args++;
               const usize opcode = parse_token_as_hex(args);
+              insert_cmd_in_program(into_step,  opcode);
+              /*
               dbgln(MINI, "Insert comand <", opcode, "> in program step ", into_step);
               
               u8 code_page[106];  
@@ -835,7 +831,7 @@ Kx=0 0,Kx=0 1,Kx=0 2,Kx=0 3,Kx=0 4,Kx=0 5,Kx=0 6,Kx=0 7,Kx=0 8,Kx=0 9,Kx=0 A,Kx=
                 code_page[i] = copy_code;
                 copy_code = move_code;
               }
-              core_61::set_code_page(code_page);
+              core_61::set_code_page(code_page);*/
             break;
           }
           case  T_STACK_OUTPUT:
@@ -857,9 +853,9 @@ Kx=0 0,Kx=0 1,Kx=0 2,Kx=0 3,Kx=0 4,Kx=0 5,Kx=0 6,Kx=0 7,Kx=0 8,Kx=0 9,Kx=0 A,Kx=
               input_R_stack();
             break;
           case  T_DIR: {
-              char slot_name[17];
+              char slot_name[SIZEOF_SLOT_NAME];
               for(usize i=0; i < 100; i++) {
-                if(IsOcupped(i)) {
+                if(IsOccupied(i)) {
                   Serial.print(i); Serial.print(". "); Serial.println(ReadSlotName(i, (char*) &slot_name[0]));
                 }
               }
@@ -876,7 +872,7 @@ Kx=0 0,Kx=0 1,Kx=0 2,Kx=0 3,Kx=0 4,Kx=0 5,Kx=0 6,Kx=0 7,Kx=0 8,Kx=0 9,Kx=0 A,Kx=
                  Serial.println("Error: is out of range 0..99 !");
                 break;
               }
-              if(!IsOcupped(nSlot)) {
+              if(!IsOccupied(nSlot)) {
                 Serial.println("Warning: slot is already empty.");
                 break;
               }

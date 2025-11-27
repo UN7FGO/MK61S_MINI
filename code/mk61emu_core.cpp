@@ -80,7 +80,7 @@ static const char default_symbols[16] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'L', 'C', 'r', 'E', ' '
 };
 
-#include <array>
+#include "array"
 #if IS_CORTEX_M4() //__ARM_ARCH == 7
   #warning("Hardware mul/div present!")
 #else
@@ -1580,9 +1580,57 @@ const char* read_stack_register(stack reg, char cvalue[15], const char* symbols_
 //                                           mantisa                   |    pow
 //                                       0   1   2   3   4  5  6  7  8   9  10  11
 static const usize indicator_pos[12] = {24, 21, 18, 15, 12, 9, 6, 3, 0, 33, 30, 27};
-namespace core_61 {
+namespace   core_61   {
 
 static  usize   backstep_comma_position;
+bool            edit_program;
+
+void  set_stack_register(stack reg, bcd_value *value) {
+  //                         +3   +3   +3   +3   +3   +3   +3   +3   +3    +3    +3
+  // Конвертируем мантиссу 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> S -> ph -> pl -> s
+  usize addr = (usize) reg + 1 + (3 * 7) + (3 * 4);
+
+  // Знак мантиссы, младший разряд порядка, старщий разряд порядка, знак степени
+  usize temp =  value->signs_and_pow; 
+  for(isize j = 8; j < (8+1+2+1); j++) {
+    const u8 tetrada = temp & 0x0F;
+    dbghex(EXT_RUN, ",", tetrada);
+    ringM[addr] = tetrada;
+    temp >>= 4;
+    addr -= 3;
+  }
+
+  usize mantissa =  value->mantissa; 
+  for(isize j = 0; j < 8; j++) {
+    const u8 digit = mantissa & 0x0F;
+    dbghex(EXT_RUN, ",", digit);
+    ringM[addr] = digit;
+    mantissa >>= 4;
+    addr -= 3;
+  }
+  dbgln(EXT_RUN,".");
+}
+
+void  get_stack_register(stack reg, bcd_value &value) {
+  // Конвертируем мантиссу
+  usize addr = (usize) reg + 1;
+
+  for(isize j = 0; j < 8; j++) {
+    const u32 digit = ringM[addr];
+    dbghex(EXT_RUN, ",", digit);
+    value.mantissa = (value.mantissa << 4) | digit;
+    addr += 3;
+  }
+
+  // Знак мантиссы, младший разряд порядка, старщий разряд порядка, знак степени
+  for(isize j = 8; j < (8+1+2+1); j++) {
+    const u32 tetrada = ringM[addr];
+    dbghex(EXT_RUN, ",", tetrada);
+    value.signs_and_pow = (value.signs_and_pow << 4) | (u16) tetrada;
+    addr += 3;
+  }
+  dbgln(EXT_RUN,".");
+}
 
 usize len_code_command(u8 cod) {
   /*
@@ -1605,6 +1653,7 @@ void step(void) {
 void enable(void) {
     MK61Emu_Cleanup();
     //MK61Emu_SetAngleUnit(RADIAN);
+    core_61::edit_program = false;
     core_61::clear_displayed();
     backstep_comma_position = core_61::comma_position();
     dbghexln(CORE61," IK1302_AMK $", (isize) &IK1302_AND_AMK, " IK1302_DCW $", (isize) &IK1302_DCW, " IK1302_DCWA $", (isize) &IK1302_DCWA);
@@ -1632,7 +1681,9 @@ bool  update_indicator(char* buffer, const char* display_symbols) { // возр�
     }
   }
 
-  if(i == comma_pos) *buffer++ = '.';
+  if(i == comma_pos) { // Так как индикатор ЖК не имеет позицию точки, то для нее отводится символ
+    if(i < (11 - 1)) *buffer++ = '.'; // ставим в текстовом буфере точку, если ее позиция < 11
+  }
 
   while(i < 12) {
     const char read_char = display_symbols[ m_IK1302.R[ indicator_pos[i++] ] ];
@@ -1667,13 +1718,17 @@ void  set_code_page(uint8_t* page) {
 
 void  get_code_page(uint8_t* page) {
   for(usize i = 41; i < SIZE_RING_M/*672*/; i+=42) {
-    *page++ = MK61Emu_GetCode(i);
+    *page++ = core_61::get_code(i);
     usize addr = i - 36;
     while(addr < i) {
-          *page++ = MK61Emu_GetCode(addr);
+          *page++ = core_61::get_code(addr);
           addr += 6;
     }
   }
+}
+
+u8    get_code(i32 addr){
+    return (ringM[addr]<<4)|(ringM[addr-3]);
 }
 
 }
@@ -1789,10 +1844,6 @@ usize MK61Emu_Read_X_as_byte(void) {
     }
 
   return num;
-}
-
-uint8_t MK61Emu_GetCode(int addr){
-    return (ringM[addr]<<4)|(ringM[addr-3]);
 }
 
 void MK61Emu_SetCode(int addr, uint8_t data) {

@@ -12,7 +12,6 @@ static const u32               KEY_RUN    =   30;
 static const u32               KEY_RET    =   31;
 static const u32               KEY_FRW    =   32;
 static const u32               KEY_BKW    =   33;
-static const u32               KEY_BASIC  =   36;
 static const u32               KEY_K      =   37;
 static const u32               KEY_F      =   38;
 static const u32               KEY_ESC    =   39;
@@ -31,15 +30,17 @@ static constexpr i32 KEY_RIGHT    =   24;
 static constexpr i32 KEY_ALPHA    =   KEY_F;
 static constexpr i32 KEY_OK       =   29;
 
+static const i32 KEY_LOAD_PRESS   =   35        | (i32) key_state::PRESSED;
+static const i32 KEY_USER_PRESS   =   19        | (i32) key_state::PRESSED;
+static const i32 KEY_ESC_PRESS    =   39        | (i32) key_state::PRESSED;
 static const i32 KEY_LEFT_PRESS   =   KEY_LEFT  | (i32) key_state::PRESSED;
 static const i32 KEY_RIGHT_PRESS  =   KEY_RIGHT | (i32) key_state::PRESSED;
 static const i32 KEY_OK_PRESS     =   KEY_OK    | (i32) key_state::PRESSED;
+static const i32 KEY_RUN_PRESS    =   KEY_RUN   | (i32) key_state::PRESSED;
 
-static const i32 KEY_LOAD_PRESS   =   35 | (i32) key_state::PRESSED;
-static const i32 KEY_USER_PRESS   =   19 | (i32) key_state::PRESSED;
-static const i32 KEY_USER_RELEASE =   19 | (i32) key_state::RELEASED;
-static const i32 KEY_ESC_PRESS    =   39 | (i32) key_state::PRESSED;
-static const i32 KEY_ESC_RELEASE  =   39 | (i32) key_state::RELEASED;
+static const i32 KEY_USER_RELEASE =   19        | (i32) key_state::RELEASED;
+static const i32 KEY_ESC_RELEASE  =   39        | (i32) key_state::RELEASED;
+static const i32 KEY_RUN_RELEASE  =   KEY_RUN   | (i32) key_state::RELEASED;
 
 class __attribute__((__packed__)) TMK61_cross_key {
   public:

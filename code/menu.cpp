@@ -31,10 +31,6 @@ bool  InfoData(void) {
 const t_punct DFU_mode_punct      = {.size = 15, .action = (menu_action) &DFU_enable,           .text = "DFU mode enable"};
 const t_punct LIB_61_punct        = {.size = 12, .action = &mk61_library_select,                .text = "MK61 library"};
 const t_punct GAME_61_punct       = {.size = 10, .action = &mk61_games_select,                  .text = "MK61 Games"};
-#ifdef BASIC
-const t_punct LIB_BASIC_punct     = {.size = 13, .action = &BASIC_library_select,               .text = "BASIC library"};
-const t_punct BASIC_punct         = {.size = 12, .action = (menu_action) &EditBasic,            .text = "BASIC editor"};
-#endif
 const t_punct RESET_punct         = {.size = 12, .action = (menu_action) &NVIC_SystemReset,     .text = "Reset device"};
 const t_punct ERASE_punct         = {.size = 12, .action = (menu_action) &EraseFlash,           .text = "Erase FLASH!"};
 const t_punct SOUND_ON_punct      = {.size = 16, .action = (menu_action) &TurnSound,            .text = "Sound ON       "};
@@ -50,10 +46,6 @@ t_punct* MENU[MENU_PUNCT] = {
       (t_punct*) &SPEED_HIGH_punct,
       (t_punct*) &LIB_61_punct,
       (t_punct*) &GAME_61_punct,
-#ifdef BASIC
-      (t_punct*) &LIB_BASIC_punct,
-      (t_punct*) &BASIC_punct,
-#endif      
       (t_punct*) &RESET_punct,
       (t_punct*) &ERASE_punct,
       (t_punct*) &FLASH_punct,

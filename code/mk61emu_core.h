@@ -28,6 +28,8 @@
 #include "rust_types.h"
 #include <stdbool.h>
 
+static  constexpr usize MK61_NOP= 0x54; // NOP
+
 #ifdef EXPAND_RING_MK61
   //                                              IR1   IR2  IKF  1302 1303 1306
   static constexpr  usize   SIZE_RING_M         = 252 + 252 + 42 + 42 + 42 + 42;
@@ -149,7 +151,16 @@ extern  IK1302  m_IK1302;
 extern  u8      ringM[SIZE_RING_M];
 
 namespace core_61 {
+
+  #pragma pack(push, 4)
+  struct bcd_value { // тип хранимое значение mk61 8 десятичных знаков мантисса, 2 знака порядок, два знака
+      u32   mantissa;
+      u16   signs_and_pow; // sign mantissa, pow low, pow high, sign pow 
+  };
+  #pragma pack(pop)
+
   static constexpr  usize LAST_PROGRAM_STEP = MK61_LAST_PRG_STEP;
+  extern    bool  edit_program;
 
   inline    isize get_ring_address(isize linear_address) {
     const isize cycle_x = ((linear_address % 7) == 0)?  linear_address : (linear_address - 7);
@@ -161,6 +172,7 @@ namespace core_61 {
   inline    u8    get_IPH(void)         { return  m_IK1302.R[34] & 0xF; }
   inline    u8    get_IPL(void)         { return  m_IK1302.R[31] & 0xF; }
   inline    u8    get_IP (void)         { return  get_IPH()*10 + get_IPL(); }
+  extern    u8    get_code(i32 addr);
 
   inline    bool  is_displayed(void)    { return (m_IK1302.displayed != 0); }
   inline    usize comma_position(void)  { return m_IK1302.comma; }
@@ -168,6 +180,8 @@ namespace core_61 {
   extern    usize len_code_command(u8 cod);
   extern    void  set_code_page(uint8_t* page);
   extern    void  get_code_page(uint8_t* page);
+  extern    void  get_stack_register(stack reg, bcd_value &value);
+  extern    void  set_stack_register(stack reg, bcd_value *value);
 
   extern    void  enable(void);
   extern    void  step(void);
@@ -205,7 +219,7 @@ usize   MK61Emu_Read_X_as_byte(void);
 bool    MK61Emu_IsRunning(void);
 
 void    MK61Emu_SetCode(int addr, uint8_t data);
-uint8_t MK61Emu_GetCode(int addr);
+//uint8_t MK61Emu_GetCode(int addr);
 //void    MK61Emu_GetCodePage(uint8_t* page);
 void    MK61Emu_ClearCodePage(void);
 

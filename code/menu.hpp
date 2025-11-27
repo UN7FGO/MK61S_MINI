@@ -2,7 +2,6 @@
 #define MENU_CLASS
 
 #include  "keyboard.h"
-#include  "basic.hpp"
 #include  "tools.hpp"
 #include  "library_pmk.hpp"
 
@@ -13,11 +12,7 @@ namespace action {
 
 typedef bool (*menu_action)(void);  // возвращает необходимость покинуть главное меню 
 
-#ifdef BASIC
-  static constexpr int MENU_PUNCT = 11
-#else 
-  static constexpr int MENU_PUNCT = 9;
-#endif
+static constexpr int MENU_PUNCT = 9;
 
 struct  t_punct {
     u8            size;

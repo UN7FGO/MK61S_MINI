@@ -19,27 +19,30 @@ static constexpr isize BLOCK_SIZE           = 106 / 13;
 static const int switch_R_GRD_G = 106;
 static const int count_switch_R_GRD_G = 107;
 
-extern bool flash_is_ok;
-extern void DFU_enable(void);
-extern void message_and_waitkey(const char* lcd_message);
-extern bool Confirmation(void);
-extern isize calc_address(usize nSlot);
-extern char* ReadSlotName(usize nSlot, char* slot_name);
-extern bool Rename(usize nSlot, char* slot_name);
-extern bool Store(void);
-extern bool Store(usize nSlot);
-extern bool Load(void);
-extern bool Load(usize nSlot);
-extern u8   load_word(isize segment_address, isize offset);
-extern bool EraseFlash(void);
-extern bool clear_storage(void);
-extern bool erase_slot(usize nSlot);
-extern void init_external_flash(void);
-extern void sound(usize pin, isize freq_Hz, usize duration_ms);
+extern  void  DFU_enable(void);
+extern  void  sound(usize pin, isize freq_Hz, usize duration_ms);
 
-extern usize seek_program_END(u8* code_page);
+extern  void  message_and_waitkey(const char* lcd_message);
+extern  bool  Confirmation(void);
 
-inline bool IsOcupped(usize nSlot) {
+extern  bool  flash_is_ok;
+extern  isize calc_address(usize nSlot);
+extern  char* ReadSlotName(usize nSlot, char* slot_name);
+extern  bool  Rename(usize nSlot, char* slot_name);
+extern  bool  Store(void);
+extern  bool  Store(usize nSlot);
+extern  bool  Load(void);
+extern  bool  Load(usize nSlot);
+extern  u8    load_word(isize segment_address, isize offset);
+extern  bool  EraseFlash(void);
+extern  bool  clear_storage(void);
+extern  bool  erase_slot(usize nSlot);
+extern  void  init_external_flash(void);
+
+extern usize  seek_program_END(u8* code_page);
+extern  void  insert_cmd_in_program(usize into_step, usize opcode);
+
+inline bool IsOccupied(usize nSlot) {
    return (load_word(nSlot * FLASH_SECTOR_SIZE, OFFSET_FLAG_OCCUPIED) == SLOT_OCCUPIED);
 }
 

@@ -134,7 +134,7 @@ const char* mnemo_code_F[40] = {
   m_FDP,  m_F2,   m_F5,   m_F8,   m__,
   m_F0,   m_F1,   m_F4,   m_F7,   m__,
   m_FPP,  m_FBP,  m_FxP,  m_FPx,  m__,
-  m_FSP,  m_FBO,  m_FSF,  m_FSB,  m__,
+  m_FSP,  m_FBO,  m_FSB,  m_FSF,  m__,
   m__,    m__,    m_K,    m_FF,   m__
 };
 

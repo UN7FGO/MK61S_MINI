@@ -111,13 +111,13 @@ class class_disassm_mk61 {
           // дизассемблируем с адреса IP_mk61     DISP [___ ___ ___]
           const u8 addr = IP_mk61 - 1;
           if(addr < 0xC3) { // до адреса 0xC3
-            const u8 code = MK61Emu_GetCode(core_61::get_ring_address(addr));
+            const u8 code = core_61::get_code(core_61::get_ring_address(addr));
             #ifdef DEBUG_DISASMBLER
               Serial.print("mk61 IP "); Serial.print(mk61s.get_IPH()); Serial.print(':'); Serial.print(mk61s.get_IPL());
               Serial.print(" linear address $"); Serial.print(addr); Serial.print(" code "); Serial.println(code, HEX);
             #endif
             if(code <= 9) {
-                *(u16*) &buffer[0] = (u16) ((code + '0') << 8) | '#';
+                *(u32*) &buffer[0] = (u32) ' ' << 24 | ' ' << 16| ((code + '0') << 8) | '#';
               } else if(code >= 0x0A && code < 0x1F) { 
                 *(u32*) &buffer[0] = mk61_disassm_0A_1E[code - 0x0A];
               } else if(code >= 0x20 && code < 0x2B) {

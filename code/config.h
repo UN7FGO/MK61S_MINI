@@ -11,19 +11,18 @@
 //#define DEBUG_DISASMBLER    // Отладочная информация по встроенному дисассемблеру МК61 инструкций
 //#define DEBUG_KBD           // Отладочная информация по клавиатурному драйверу
 //#define DEBUG_MENU          // Отладочная информация по системе меню
-//#define DEBUG_BASIC         // Отладочная информация по BASIC
 //#define DEBUG_LIBRARY       // Отладочная информация по библиотеке программ МК61
 //#define DEBUG_MK61E         // Отладочная информация расширяющая представление вывода терминала по МК61
 //#define DEBUG_PARSE         // Отладочная информация по парсеру ассемблера
 //#define EXPAND_RING_MK61    // Увеличить объем оперативной памяти кольца МК61 на еще один регистр IK130X
 #define DEBUG_MEASURE       // Вывод времени исполнения от С/П до С/П для вычисления производительности ядра
+#define DEBUG_RUN_STOP      // Отладочный вывод по расширению команды С/П
 //#define MK61_EXTENDED
 //#define B3_34
 #define TERMINAL
 #define SPI_FLASH
 //#define DEBUG
 //#define DEBUG_M61
-//#define BASIC
 
 //#define CDU
 //#define LK432
@@ -97,13 +96,6 @@
   constexpr bool DBG_MENU = false;
 #endif
 
-#ifdef DEBUG_BASIC
-  constexpr bool DBG_BASIC = true;
-  #define SERIAL_OUTPUT
-#else
-  constexpr bool DBG_BASIC = false;
-#endif
-
 #ifdef DEBUG_CORE61
   constexpr bool DBG_CORE61 = true;
   #define SERIAL_OUTPUT
@@ -123,6 +115,13 @@
   #define SERIAL_OUTPUT
 #else
   constexpr bool DBG_MK61E = false;
+#endif
+
+#ifdef DEBUG_RUN_STOP
+  constexpr bool DBG_EXT_RUN = true;
+  #define SERIAL_OUTPUT
+#else
+  constexpr bool DBG_EXT_RUN = false;
 #endif
 
 #ifdef ARDUINO_BLACKPILL_F411CE

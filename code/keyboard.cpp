@@ -1,4 +1,4 @@
-#include "wiring_constants.h"
+#include <wiring_constants.h>
 #include "keyboard.h"
 #include "tools.hpp"
 #include "debug.h"
@@ -19,7 +19,7 @@ static constexpr t_time_ms  KEY_HOLD_MS       =   1500;  // константны
 
 extern void idle_main_process(void);
 extern void event_hold_key(i32 holded_key, i32 hold_quant);
-extern void event_unhold_key(i32 unholded_key);
+extern void event_unhold_key(i32 unholded_key, i32 hold_quant);
 
 inline void scan_out(usize data) {
   for(int pin : scan_pins) { 
@@ -113,7 +113,7 @@ static  t_time_ms      time_switch_scan_line;
 static  t_time_ms      time_debounced_key;
 
 inline isize get_set_bit_position(u8 row_code) {
-  for(usize bit_position = 0; bit_position <= KEY_IN_COLUMN; bit_position++){
+  for(usize bit_position = 0; bit_position < KEY_IN_COLUMN; bit_position++){
     if((row_code & 1) != 0) return bit_position;
     row_code >>= 1;
   }
@@ -154,6 +154,7 @@ void  reset_scan_line(void) {
 
 void  clear_hold_key(void) {
   holded_scan_code = -1;
+  hold_quant_counter = -1;
 }
 
 void  exclude_before(i32 before_key) { // убрать все коды клавиш в том числе before_key, из очереди клавиатуры
@@ -259,9 +260,15 @@ isize scan(void) {
     dbgln(KBD, "fixed press time: ", press_time, "ms, (hold) scan_code #", scan_code);
   } else {
   // было отжатие удержанной клавиши
+    dbgln(KBD, "release scan_code #", scan_code);
     if(holded_scan_code == code) {
-      event_unhold_key(holded_scan_code);
-      holded_scan_code = -1; // снимаем удержание 
+      dbg(KBD, "scan_code #", scan_code, ", ms ", millis());
+      if(hold_quant_counter >= 0) {
+        dbgln(KBD, " <<UNHOLD>>");
+        event_unhold_key(holded_scan_code, hold_quant_counter);
+        hold_quant_counter  = -1;   // снимаем счетчик квантов удержания
+      }
+      holded_scan_code    = -1;   // снимаем удержание 
     }
   }
 
